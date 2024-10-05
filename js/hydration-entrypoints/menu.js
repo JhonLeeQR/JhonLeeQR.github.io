@@ -148,7 +148,7 @@ import"../chunk-GWZE2FXG.js";import{a as N,b as w,d as X,e as K,f as W}from"../c
     }
   `,m([s({type:String})],f.prototype,"label",2),m([s({type:Number})],f.prototype,"value",2),m([s({type:String})],f.prototype,"color",2),m([s({type:String})],f.prototype,"type",2),f=m([g("hct-slider")],f);var C=class extends Event{constructor(t){super("change-color",{bubbles:!0,composed:!0});this.color=t}},O=class extends Event{constructor(t){super("change-mode",{bubbles:!0,composed:!0});this.mode=t}};var p=class extends b{constructor(){super(...arguments);this.selectedColorMode=null;this.hexColor="";this.hue=0;this.chroma=0;this.tone=0}render(){return i`
       <div id="head-wrapper">
-        <h2> Theme Controls </h2>
+        <h2> Tema </h2>
         <copy-code-button
           button-title="Copy current theme to clipboard"
           label="Copy current theme"
