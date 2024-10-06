@@ -4,7 +4,7 @@
 
 .scene {
     position: relative;
-    width: 50%;
+    width: 70%;
     aspect-ratio: 16/9;
     height: auto;
     overflow: hidden;
