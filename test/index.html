@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disney Channel en Vivo</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 300%;
+            height: 300%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Iframe para cargar la página con el video -->
+    <iframe id="videoIframe" src="https://www.cablevisionhd.com/disney-channel-en-vivo.html" allow="fullscreen; autoplay" title="Disney Channel en Vivo"></iframe>
+
+    <script>
+        // Función para poner el iframe en pantalla completa
+        function goFullScreen() {
+            const iframe = document.getElementById('video');
+
+            // Intentar poner el iframe en pantalla completa
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.mozRequestFullScreen) { // Firefox
+                iframe.mozRequestFullScreen();
+            } else if (iframe.webkitRequestFullscreen) { // Chrome, Safari y Opera
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { // IE/Edge
+                iframe.msRequestFullscreen();
+            }
+        }
+
+        // Llamar a la función al cargar la página
+        window.onload = function() {
+            goFullScreen();
+        };
+    </script>
+</body>
+</html>
