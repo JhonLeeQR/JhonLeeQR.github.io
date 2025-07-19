@@ -4620,28 +4620,45 @@ function generarHTMLParaImprimir() {
     setTimeout(() => window.addEventListener("click", handleClickOutside), 50);
 }
 
-// ✅ FUNCIÓN PARA COPIAR CONTENIDO SIN ALERTA
+// FUNCIÓN PARA COPIAR CONTENIDO SIN ALERTA
 function copiarContenido() {
     const editable = document.getElementById("editable");
     if (!editable) return;
 
-    const texto = editable.innerText;
+    const html = editable.innerHTML;
 
     if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(texto).catch(err => {
+        const blob = new Blob([html], { type: "text/html" });
+        const data = [new ClipboardItem({ "text/html": blob })];
+
+        navigator.clipboard.write(data).catch(err => {
             console.error("Error al copiar:", err);
         });
     } else {
-        const temp = document.createElement("textarea");
-        temp.value = texto;
+        // Fallback para navegadores antiguos
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+        temp.contentEditable = true;
         temp.style.position = "fixed";
         temp.style.opacity = "0";
         document.body.appendChild(temp);
-        temp.select();
-        document.execCommand("copy");
+
+        const range = document.createRange();
+        range.selectNodeContents(temp);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        try {
+            document.execCommand("copy");
+        } catch (err) {
+            console.error("Error al copiar con fallback:", err);
+        }
+
         document.body.removeChild(temp);
     }
 }
+
 
 function getParams() {
     const params = new URLSearchParams(window.location.search);
