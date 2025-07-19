@@ -3904,10 +3904,52 @@
                                         
                                         
 
-                                        <div class="filtros">
-                                        <label>Desde: <input type="date" id="desde" value="2025-07-14"></label>
-                                        <label>Hasta: <input type="date" id="hasta" value="2025-08-31"></label>
-                                        </div>
+                                        <div class="filtros" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start;">
+  <style>
+    .filtros label {
+      display: inline-flex;
+      flex: 1 1 auto;
+      white-space: normal; /* ✅ permite salto de línea en pantallas pequeñas */
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .filtros input[type="date"] {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    @media (max-width: 600px) {
+      .filtros label {
+        flex: 1 1 100%; /* ✅ cada uno en su propia fila */
+      }
+    }
+
+    @media (max-width: 600px) {
+      [_nghost-ng-c1982646464] {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        height: auto !important;
+    min-height: auto !important;
+    overflow-y: auto;
+        align-items: stretch;
+        justify-content: center;
+        padding: 1rem 0;
+      }
+    }
+
+
+    @media (max-width: 600px) { .breadcrumb__breadcrumb[_ngcontent-ng-c1982646464] {
+        padding-top: 16px;  
+        padding-bottom: 16px;   
+        height: auto;
+        }}
+  </style>
+
+  <label>Desde: <input type="date" id="desde" value="2025-07-14"></label>
+  <label>Hasta: <input type="date" id="hasta" value="2025-08-31"></label>
+</div>
                                         
 
 
