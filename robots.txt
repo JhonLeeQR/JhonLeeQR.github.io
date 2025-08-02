@@ -1,2 +1,3 @@
 User-agent: *
 Allow: /
+Sitemap: https://jhonleeqr.github.io/cronograma/sitemap.xml
