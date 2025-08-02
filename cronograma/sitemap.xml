@@ -10,7 +10,10 @@
 <url>
   <loc>https://jhonleeqr.github.io/cronograma/</loc>
   <lastmod>2025-07-19T17:33:33+00:00</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>1.0</priority>
 </url>
+
 
 
 </urlset>
