@@ -3686,7 +3686,6 @@
       white-space: nowrap;
       background: var(--sys-surface);
       min-width: 35px;
-      height: 32px;
       box-sizing: border-box;
       position: relative;
       vertical-align: middle;
@@ -3710,7 +3709,7 @@
       border-right: 1px solid var(--sys-outline-variant) !important;
       width: 450px !important;
       min-width: 250px !important;
-      font-size: 13px;
+      font-size: 11px;
       max-width: 450px !important;
       text-align: left !important;
       padding: 8px 12px !important;
@@ -3726,7 +3725,6 @@
       position: sticky !important;
       top: 0 !important;
       z-index: 8 !important;
-      color: var(--sys-on-surface-variant) !important;
       font-weight: bold;
     }
 
@@ -3735,7 +3733,7 @@
       top: 34px !important;
       z-index: 8 !important;
       font-weight: bold;
-      font-size: 16px;
+      font-size: 13px;
       text-align: center !important;
       border-bottom: 2px var(--sys-surface) !important;
     }
@@ -3750,33 +3748,34 @@
 
     /* INTERSECCIÓN: Columna pegajosa + Fila pegajosa */
     .sticky-col.sticky-top-1 {
-      vertical-align: middle !important;
-      text-align: center !important;
-      font-size: 17px !important;
-      align-items: center;
         z-index: 15 !important;
       border-bottom: 1px var(--sys-on-surface-variant) !important;
+
     }
 
     .sticky-col.sticky-top-2 {
       z-index: 15 !important;
       border-bottom: 2px var(--sys-surface) !important;
+ 
     }
 
     .sticky-col.sticky-top-3 {
       z-index: 15 !important;
       border-bottom: 1px solid var(--sys-outline-variant) !important;
+
     }
 
     /* Estilos para meses */
     .mes {
       font-weight: bold;
+       font-size: 14px !important;
     }
 
     /* Estilos para días de semana */
     .diasemana {
       font-size: 12px;
       font-weight: normal;
+      padding: 0px !important;
     }
 
     /* Estilos para títulos y subtítulos */
@@ -3794,7 +3793,7 @@
     .titulo {
       background: var(--sys-surface-container) !important;
       font-weight: bold;
-      font-size: 15px;
+      font-size: 13px;
       padding: 10px !important;
       white-space: nowrap !important;
       overflow: hidden !important;
@@ -3804,7 +3803,7 @@
     .subtitulo {
       background: var(--sys-surface) !important;
       font-weight: bold;
-      font-size: 14px;
+      font-size: 12px;
       padding: 8px !important;
       white-space: nowrap !important;
       overflow: hidden !important;
