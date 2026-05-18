@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis de Tránsito Vehicular — Informe Técnico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Mono:wght@400;500&family=Roboto+Flex:opsz,wght@8..144,300;8..144,400;8..144,500;8..144,600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════
+   MATERIAL DESIGN 3 — EXPRESSIVE TOKENS
+   Dark / Light themes
+══════════════════════════════════════ */
+
+:root, [data-theme="dark"] {
+  /* Surface */
+  --md-sys-color-background:       #0f1117;
+  --md-sys-color-surface:          #161b27;
+  --md-sys-color-surface-container:#1c2235;
+  --md-sys-color-surface-variant:  #222c42;
+  --md-sys-color-outline:          #3a4a6b;
+  --md-sys-color-outline-variant:  #253050;
+
+  /* On-surface */
+  --md-sys-color-on-surface:       #e2e8f4;
+  --md-sys-color-on-surface-var:   #9aabcc;
+
+  /* Primary — Cyan teal */
+  --md-sys-color-primary:          #00d5f0;
+  --md-sys-color-on-primary:       #001f25;
+  --md-sys-color-primary-container:#003640;
+  --md-sys-color-on-primary-cont:  #80eeff;
+
+  /* Secondary — Amber */
+  --md-sys-color-secondary:        #f5c842;
+  --md-sys-color-secondary-cont:   #3a2e00;
+
+  /* Tertiary — Coral */
+  --md-sys-color-tertiary:         #ff7155;
+  --md-sys-color-tertiary-cont:    #3d1100;
+
+  /* Extra accent — Violet */
+  --md-sys-color-extra:            #c084fc;
+
+  /* Success */
+  --md-sys-color-success:          #6df06b;
+
+  /* Sentido */
+  --ida:   #00d5f0;
+  --vuelta:#ff7155;
+  --ambos: #f5c842;
+
+  /* Elevation / tonal */
+  --elev-1: rgba(0,213,240,0.05);
+  --elev-2: rgba(0,213,240,0.08);
+
+  --chart-grid: rgba(58,74,107,0.5);
+  --chart-text: #9aabcc;
+}
+
+[data-theme="light"] {
+  --md-sys-color-background:       #f4f6fc;
+  --md-sys-color-surface:          #ffffff;
+  --md-sys-color-surface-container:#eef1f8;
+  --md-sys-color-surface-variant:  #dce3f5;
+  --md-sys-color-outline:          #8d9ab8;
+  --md-sys-color-outline-variant:  #c5cee3;
+
+  --md-sys-color-on-surface:       #1a2138;
+  --md-sys-color-on-surface-var:   #4a5880;
+
+  --md-sys-color-primary:          #006d7f;
+  --md-sys-color-on-primary:       #ffffff;
+  --md-sys-color-primary-container:#bee9f2;
+  --md-sys-color-on-primary-cont:  #001f26;
+
+  --md-sys-color-secondary:        #7a5a00;
+  --md-sys-color-secondary-cont:   #ffeea0;
+
+  --md-sys-color-tertiary:         #9a2400;
+  --md-sys-color-tertiary-cont:    #ffdbd1;
+
+  --md-sys-color-extra:            #6d3baf;
+  --md-sys-color-success:          #1b6b1a;
+
+  --ida:   #006d7f;
+  --vuelta:#9a2400;
+  --ambos: #7a5a00;
+
+  --elev-1: rgba(0,109,127,0.04);
+  --elev-2: rgba(0,109,127,0.08);
+
+  --chart-grid: rgba(141,154,184,0.3);
+  --chart-text: #4a5880;
+}
+
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-surface);
+  font-family: 'Roboto Flex', 'Google Sans', sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 200;
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 28px;
+  padding: 8px 16px 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-var);
+  transition: all 0.2s cubic-bezier(0.2,0,0,1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.theme-toggle:hover {
+  background: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.theme-toggle .toggle-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 52px 48px 40px;
+  position: relative;
+  overflow: hidden;
+}
+header::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(ellipse, rgba(0,213,240,0.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--md-sys-color-primary) 0%, transparent 70%);
+}
+.header-eyebrow {
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+  margin-bottom: 14px;
+  opacity: 0.85;
+}
+header h1 {
+  font-family: 'Google Sans', sans-serif;
+  font-size: clamp(28px, 4.5vw, 52px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+header h1 span { color: var(--md-sys-color-primary); }
+.header-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.meta-pill {
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 11px;
+  padding: 5px 14px;
+  background: var(--md-sys-color-primary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 20px;
+  color: var(--md-sys-color-on-primary-cont);
+  transition: background 0.3s;
+}
+
+/* ── PASTE SECTION ── */
+.paste-section {
+  background: var(--md-sys-color-surface-container);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 36px 48px;
+  position: relative;
+}
+.paste-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+textarea#paste-area {
+  width: 100%;
+  min-height: 180px;
+  padding: 16px;
+  background: var(--md-sys-color-surface);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  color: var(--md-sys-color-on-surface);
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  line-height: 1.6;
+  margin-top: 16px;
+}
+textarea#paste-area:focus {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 3px rgba(0,213,240,0.12);
+}
+textarea#paste-area::placeholder { color: var(--md-sys-color-outline); }
+.paste-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── MATERIAL BUTTONS ── */
+.btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 20px;
+  font-family: 'Google Sans', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2,0,0,1);
+  letter-spacing: 0.25px;
+  position: relative;
+  overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: inherit;
+}
+.btn:hover::after { opacity: 0.08; }
+.btn:active::after { opacity: 0.15; }
+
+.btn-filled {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+.btn-filled:hover { box-shadow: 0 3px 8px rgba(0,0,0,0.3); transform: translateY(-1px); }
+
+.btn-tonal {
+  background: var(--md-sys-color-surface-variant);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+.btn-tonal:hover { border-color: var(--md-sys-color-outline); }
+
+.btn-danger {
+  background: transparent;
+  color: var(--md-sys-color-tertiary);
+  border: 1px solid rgba(255,113,85,0.3);
+}
+.btn-danger:hover { background: var(--md-sys-color-tertiary-cont); }
+
+.btn-sm { padding: 7px 18px; font-size: 13px; }
+
+#parse-status {
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  display: none;
+}
+.status-ok {
+  background: rgba(109,240,107,0.1);
+  border: 1px solid rgba(109,240,107,0.3);
+  color: var(--md-sys-color-success);
+}
+.status-err {
+  background: rgba(255,113,85,0.1);
+  border: 1px solid rgba(255,113,85,0.3);
+  color: var(--md-sys-color-tertiary);
+}
+.headers-check {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-var);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.headers-check input { accent-color: var(--md-sys-color-primary); }
+
+/* ── NAV ── */
+nav {
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0 48px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+nav::-webkit-scrollbar { display: none; }
+nav a {
+  padding: 14px 20px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-var);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  letter-spacing: 0.1px;
+}
+nav a:hover {
+  color: var(--md-sys-color-primary);
+  border-bottom-color: var(--md-sys-color-primary);
+  background: var(--elev-1);
+}
+
+/* ── MAIN ── */
+main { max-width: 1400px; margin: 0 auto; padding: 0 48px 80px; }
+.section { padding: 48px 0 24px; }
+.section-header { margin-bottom: 28px; }
+.section-number {
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--md-sys-color-primary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.section-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -0.2px;
+}
+.section-desc {
+  color: var(--md-sys-color-on-surface-var);
+  font-size: 14px;
+  margin-top: 4px;
+}
+.divider { border: none; border-top: 1px solid var(--md-sys-color-outline-variant); margin: 0; }
+
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.kpi-card {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  padding: 22px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.2,0,0,1), box-shadow 0.2s;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: var(--c, var(--md-sys-color-primary));
+  border-radius: 16px 16px 0 0;
+}
+.kpi-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-var);
+  margin-bottom: 10px;
+}
+.kpi-value {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--c, var(--md-sys-color-primary));
+  line-height: 1;
+  letter-spacing: -1px;
+}
+.kpi-unit {
+  font-size: 11px;
+  color: var(--md-sys-color-on-surface-var);
+  margin-top: 6px;
+  font-family: 'Google Sans Mono', monospace;
+}
+
+/* ── TABLES ── */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  margin-bottom: 24px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--md-sys-color-surface-container); }
+th {
+  padding: 12px 16px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-var);
+  text-align: left;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+th.num, td.num { text-align: right; }
+td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--elev-1); }
+tfoot td {
+  background: var(--md-sys-color-surface-container);
+  font-weight: 600;
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 12px;
+  border-top: 2px solid var(--md-sys-color-outline-variant);
+}
+.highlight { font-weight: 700; font-family: 'Google Sans Mono', monospace; }
+.tramo-badge {
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: var(--md-sys-color-primary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-primary-cont);
+  white-space: nowrap;
+}
+.tag {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+.tag-ida   { background: rgba(0,213,240,0.12); color: var(--ida); border: 1px solid rgba(0,213,240,0.2); }
+.tag-vuelta{ background: rgba(255,113,85,0.12); color: var(--vuelta); border: 1px solid rgba(255,113,85,0.2); }
+.spd-high  { color: var(--md-sys-color-success); font-weight: 700; }
+.spd-mid   { color: var(--md-sys-color-secondary); font-weight: 700; }
+.spd-low   { color: var(--md-sys-color-tertiary); font-weight: 700; }
+.raw-row-ida td:first-child   { border-left: 3px solid rgba(0,213,240,0.4); }
+.raw-row-vuelta td:first-child { border-left: 3px solid rgba(255,113,85,0.4); }
+
+/* ── CHARTS ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+.chart-card {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  padding: 24px;
+  transition: box-shadow 0.2s;
+}
+.chart-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.chart-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 3px;
+}
+.chart-sub { font-size: 12px; color: var(--md-sys-color-on-surface-var); margin-bottom: 18px; }
+
+/* ── SENTIDO CARDS ── */
+.sentido-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.sentido-card {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+/* ── NOTE BOX ── */
+.note-box {
+  background: rgba(245,200,66,0.07);
+  border: 1px solid rgba(245,200,66,0.25);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-var);
+  margin-bottom: 24px;
+}
+.note-box strong { color: var(--md-sys-color-secondary); }
+
+/* ── EXPORT BAR ── */
+.export-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+
+/* ── EMPTY STATE ── */
+#report { display: none; }
+.empty-state { text-align: center; padding: 100px 40px; color: var(--md-sys-color-on-surface-var); }
+.empty-icon {
+  width: 72px; height: 72px; margin: 0 auto 24px;
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.empty-icon svg { width: 32px; height: 32px; opacity: 0.35; }
+.empty-title {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-var);
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+/* ── TRAMO HEADING ── */
+.tramo-heading {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tramo-heading .tramo-meta {
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-var);
+  font-weight: 400;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding: 24px 48px;
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-var);
+  font-family: 'Google Sans Mono', monospace;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:680px){
+  header, nav, .paste-section, main, footer { padding-left: 20px; padding-right: 20px; }
+  .sentido-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .theme-toggle { top: 12px; right: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- THEME TOGGLE -->
+<button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+  <span class="toggle-icon" id="theme-icon">☀</span>
+  <span id="theme-label">Modo claro</span>
+</button>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-eyebrow">Ingeniería de Tránsito · Informe Técnico</div>
+  <h1>Análisis de <span>Velocidades</span> y Tiempos de Viaje</h1>
+  <div class="header-meta" id="header-meta">
+    <span class="meta-pill" style="opacity:.5">Sin datos cargados</span>
+  </div>
+</header>
+
+
+<div class="paste-section">
+  <div class="paste-title">Datos</div>
+  <textarea id="paste-area" placeholder=" 
+
+ 
+ "></textarea>
+  <div class="paste-controls">
+    <label class="headers-check">
+      <input type="checkbox" id="has-headers" checked> Primera fila encabezados
+    </label>
+    <button class="btn btn-filled" onclick="analizarDatos()">Analizar datos</button>
+    <button class="btn btn-danger btn-sm" onclick="limpiarTodo()">Limpiar</button>
+    <span id="parse-status"></span>
+  </div>
+</div>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="#resumen">Resumen Global</a>
+  <a href="#por-tramo">Por Tramo</a>
+  <a href="#por-vehiculo">Por Tipo Vehículo</a>
+  <a href="#por-sentido">Por Sentido</a>
+  <a href="#graficas">Gráficas</a>
+  <a href="#datos-crudos">Datos Originales</a>
+</nav>
+
+<!-- ── EMPTY STATE ── -->
+<div id="empty-state">
+  <div class="empty-state">
+    <div class="empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+    </div>
+    <div class="empty-title">Listo para analizar</div>
+    <p>Ingrese los datos desde Excel y presione <strong style="color:var(--md-sys-color-primary)">Analizar datos</strong></p>
+  </div>
+</div>
+
+<!-- ── REPORTE ── -->
+<div id="report">
+<main>
+
+<!-- 01 RESUMEN GLOBAL -->
+<section class="section" id="resumen">
+  <div class="section-header">
+    <div class="section-number">01 — Resumen Global</div>
+    <div class="section-title">Indicadores generales del estudio</div>
+    <div class="section-desc">Estadísticas consolidadas del total de registros analizados.</div>
+  </div>
+  <div class="note-box">
+    <strong>Nota metodológica:</strong> Los registros con sentido SALIDA o VUELTA pueden presentar hora fin anterior a hora inicio (circulación de retorno). Para el cálculo de promedios se emplean valores absolutos de velocidad, conforme a criterios de ingeniería de tránsito.
+  </div>
+  <div id="kpi-grid" class="kpi-grid"></div>
+  <div class="export-bar">
+    <button class="btn btn-tonal btn-sm" onclick="exportResumenGlobal()">Exportar a Excel</button>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl-resumen-global">
+      <thead><tr>
+        <th>Tramo</th>
+        <th class="num">Distancia (km)</th>
+        <th class="num">N° Vehículos</th>
+        <th class="num">Vel. Prom. IDA (km/h)</th>
+        <th class="num">T. Prom. IDA</th>
+        <th class="num">Vel. Prom. VUELTA (km/h)</th>
+        <th class="num">T. Prom. VUELTA</th>
+        <th class="num">Vel. Prom. GLOBAL (km/h)</th>
+        <th class="num">T. Prom. GLOBAL</th>
+      </tr></thead>
+      <tbody id="tbody-resumen"></tbody>
+      <tfoot id="tfoot-resumen"></tfoot>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 02 POR TRAMO -->
+<section class="section" id="por-tramo">
+  <div class="section-header">
+    <div class="section-number">02 — Por Tramo</div>
+    <div class="section-title">Análisis por tramo y tipo de vehículo</div>
+    <div class="section-desc">Desglose de velocidades y tiempos promedio por combinación de tramo, tipo de vehículo y sentido.</div>
+  </div>
+  <div class="export-bar">
+    <button class="btn btn-tonal btn-sm" onclick="exportPorTramo()">Exportar a Excel</button>
+  </div>
+  <div id="tramos-container"></div>
+</section>
+
+<hr class="divider">
+
+<!-- 03 POR TIPO VEHÍCULO -->
+<section class="section" id="por-vehiculo">
+  <div class="section-header">
+    <div class="section-number">03 — Por Tipo de Vehículo</div>
+    <div class="section-title">Análisis por categoría vehicular</div>
+    <div class="section-desc">Consolidado de velocidades y tiempos de viaje para cada tipo de vehículo, independiente del tramo.</div>
+  </div>
+  <div class="export-bar">
+    <button class="btn btn-tonal btn-sm" onclick="exportPorVehiculo()">Exportar a Excel</button>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl-vehiculos">
+      <thead><tr>
+        <th>Tipo Vehículo</th>
+        <th class="num">Total</th>
+        <th class="num">N° IDA</th>
+        <th class="num">Vel. Prom. IDA (km/h)</th>
+        <th class="num">N° VUELTA</th>
+        <th class="num">Vel. Prom. VUELTA (km/h)</th>
+        <th class="num">Vel. Prom. GLOBAL (km/h)</th>
+        <th class="num">% del total</th>
+      </tr></thead>
+      <tbody id="tbody-vehiculos"></tbody>
+      <tfoot id="tfoot-vehiculos"></tfoot>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 04 POR SENTIDO -->
+<section class="section" id="por-sentido">
+  <div class="section-header">
+    <div class="section-number">04 — Por Sentido</div>
+    <div class="section-title">Comparativo por sentido de circulación</div>
+    <div class="section-desc">Rendimiento comparado entre vehículos en sentido IDA y VUELTA/SALIDA.</div>
+  </div>
+  <div class="export-bar">
+    <button class="btn btn-tonal btn-sm" onclick="exportPorSentido()">Exportar a Excel</button>
+  </div>
+  <div class="sentido-grid" id="sentido-cards"></div>
+  <div class="table-wrap">
+    <table id="tbl-sentido">
+      <thead><tr>
+        <th>Tipo Vehículo</th>
+        <th class="num">N° IDA</th>
+        <th class="num">Vel. Prom. IDA (km/h)</th>
+        <th class="num">T. Prom. IDA</th>
+        <th class="num">N° VUELTA</th>
+        <th class="num">Vel. Prom. VUELTA (km/h)</th>
+        <th class="num">T. Prom. VUELTA</th>
+        <th class="num">Diferencia (km/h)</th>
+      </tr></thead>
+      <tbody id="tbody-sentido"></tbody>
+      <tfoot id="tfoot-sentido"></tfoot>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 05 GRÁFICAS -->
+<section class="section" id="graficas">
+  <div class="section-header">
+    <div class="section-number">05 — Visualizaciones</div>
+    <div class="section-title">Representaciones gráficas</div>
+    <div class="section-desc">Generadas automáticamente a partir de los datos ingresados.</div>
+  </div>
+  <div class="export-bar">
+    <button class="btn btn-tonal btn-sm" onclick="exportAllCharts()">Exportar gráficas (PNG)</button>
+    <button class="btn btn-tonal btn-sm" onclick="exportFullReport()">Exportar informe completo (Excel)</button>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Velocidad promedio por tipo de vehículo</div>
+      <div class="chart-sub">Comparativo IDA vs VUELTA vs GLOBAL (km/h)</div>
+      <canvas id="chart-vel-vehiculo"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Distribución por sentido de circulación</div>
+      <div class="chart-sub">Cantidad de registros IDA vs VUELTA</div>
+      <canvas id="chart-dist-sentido"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Velocidad promedio por tramo</div>
+      <div class="chart-sub">IDA — VUELTA — GLOBAL por tramo analizado</div>
+      <canvas id="chart-vel-tramo"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Composición vehicular</div>
+      <div class="chart-sub">Distribución porcentual por tipo de vehículo</div>
+      <canvas id="chart-composicion"></canvas>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <div class="chart-title">Velocidades individuales por registro</div>
+      <div class="chart-sub">IDA en azul, VUELTA en naranja</div>
+      <canvas id="chart-scatter" style="max-height:260px"></canvas>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 06 DATOS ORIGINALES -->
+<section class="section" id="datos-crudos">
+  <div class="section-header">
+    <div class="section-number">06 — Datos Originales</div>
+    <div class="section-title">Registros de campo completos</div>
+    <div class="section-desc">Datos tal como fueron capturados en el estudio de campo.</div>
+  </div>
+  <div class="export-bar">
+    <button class="btn btn-tonal btn-sm" onclick="exportDatosCrudos()">Exportar datos originales (Excel)</button>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl-raw">
+      <thead><tr>
+        <th>#</th><th>Tramo</th><th class="num">Dist. (km)</th>
+        <th>Hora Inicio</th><th>Hora Fin</th><th>ID / Placa</th>
+        <th>Tipo</th><th>Sentido</th>
+        <th class="num">Tiempo</th><th class="num">Vel. (km/h)</th>
+      </tr></thead>
+      <tbody id="tbody-raw"></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>Informe Técnico de Ingeniería de Tránsito · Análisis de Velocidades y Tiempos de Viaje</p>
+  <p style="margin-top:4px">Generado automáticamente · <span id="fecha-gen"></span></p>
+</footer>
+</div><!-- #report -->
+
+<script>
+// ════════════════════════════════════════════════════
+//   TEMA DARK / LIGHT
+// ════════════════════════════════════════════════════
+function toggleTheme(){
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-icon').textContent  = isDark ? '☽' : '☀';
+  document.getElementById('theme-label').textContent = isDark ? 'Modo oscuro' : 'Modo claro';
+  // Redibujar charts con colores actualizados
+  if(datos.length) renderCharts();
+}
+
+// ════════════════════════════════════════════════════
+//   MOTOR DE ANÁLISIS
+// ════════════════════════════════════════════════════
+
+let datos = [];
+let charts = {};
+
+const COLORS_DARK  = ['#00d5f0','#6df06b','#f5c842','#ff7155','#c084fc','#f87171','#38bdf8','#fb923c','#a3e635','#e879f9'];
+const COLORS_LIGHT = ['#006d7f','#1b6b1a','#7a5a00','#9a2400','#6d3baf','#c0392b','#0e6497','#9d4000','#4a6f00','#7c2890'];
+
+function getColors(){ return document.documentElement.getAttribute('data-theme')==='dark' ? COLORS_DARK : COLORS_LIGHT; }
+function getChartDefaults(){
+  const dark = document.documentElement.getAttribute('data-theme')==='dark';
+  return {
+    color:   dark ? '#9aabcc' : '#4a5880',
+    border:  dark ? 'rgba(58,74,107,0.5)' : 'rgba(141,154,184,0.3)',
+    textOnBars: dark ? '#e2e8f4' : '#1a2138',
+    ida:     dark ? 'rgba(0,213,240,0.75)' : 'rgba(0,109,127,0.75)',
+    idaBorder: dark ? '#00d5f0' : '#006d7f',
+    vuelta:  dark ? 'rgba(255,113,85,0.75)' : 'rgba(154,36,0,0.75)',
+    vueltaBorder: dark ? '#ff7155' : '#9a2400',
+    global:  dark ? 'rgba(245,200,66,0.75)' : 'rgba(122,90,0,0.75)',
+    globalBorder: dark ? '#f5c842' : '#7a5a00',
+  };
+}
+
+const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+const fmtVel = v => v===null ? '—' : v.toFixed(2);
+
+function tiempoAMin(str){
+  if(!str) return null;
+  str = String(str).trim();
+  const p = str.split(':').map(Number);
+  if(p.length===3) return p[0]*60 + p[1] + p[2]/60;
+  if(p.length===2) return p[0]*60 + p[1];
+  return null;
+}
+function minAMmss(m){
+  if(m===null||isNaN(m)) return '—';
+  const totalSeg = Math.round(Math.abs(m)*60);
+  const mm = Math.floor(totalSeg/60);
+  const ss = totalSeg%60;
+  return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+function minAHhmmss(m){
+  if(m===null||isNaN(m)) return '—';
+  const totalSeg = Math.round(Math.abs(m)*60);
+  const hh = Math.floor(totalSeg/3600);
+  const mm = Math.floor((totalSeg%3600)/60);
+  const ss = totalSeg%60;
+  if(hh>0) return `${hh}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+
+function parsearPaste(texto){
+  const filas = texto.trim().split('\n').map(l=>l.trim()).filter(l=>l);
+  if(!filas.length) throw new Error('No hay datos para analizar');
+  const tieneHeaders = document.getElementById('has-headers').checked;
+  const inicio = tieneHeaders ? 1 : 0;
+  const resultado = [];
+  const errores = [];
+  for(let i=inicio; i<filas.length; i++){
+    const cols = filas[i].split('\t');
+    if(cols.length < 7){ errores.push(`Fila ${i+1}: solo ${cols.length} columnas`); continue; }
+    const tramo   = (cols[0]||'').trim();
+    const distRaw = parseFloat((cols[1]||'').replace(',','.'));
+    const ini     = (cols[2]||'').trim();
+    const fin     = (cols[3]||'').trim();
+    const id      = (cols[4]||'').trim();
+    const tipo    = (cols[5]||'').trim().toUpperCase();
+    const sentido = (cols[6]||'').trim().toUpperCase();
+    let tiempo = cols[7] ? (cols[7]||'').trim() : null;
+    let vel    = cols[8] ? parseFloat((cols[8]||'').replace(',','.')) : null;
+    if((vel===null||isNaN(vel)) && tiempo && !isNaN(distRaw)){
+      const minutos = tiempoAMin(tiempo);
+      if(minutos && minutos>0) vel = distRaw / (minutos/60);
+    }
+    if(!tramo){errores.push(`Fila ${i+1}: tramo vacío`); continue}
+    if(isNaN(distRaw)){errores.push(`Fila ${i+1}: distancia inválida`); continue}
+    if(!tipo){errores.push(`Fila ${i+1}: tipo de vehículo vacío`); continue}
+    if(isNaN(vel)||vel<=0){errores.push(`Fila ${i+1}: velocidad inválida`); continue}
+    const sentidoNorm = sentido==='IDA'?'IDA':'VUELTA';
+    resultado.push({ tramo, dist:distRaw, ini, fin, id, tipo, sentido:sentidoNorm, tiempo:tiempo||'', vel:Math.abs(vel) });
+  }
+  if(!resultado.length) throw new Error('No se pudo parsear ninguna fila válida.\n'+errores.slice(0,3).join('\n'));
+  return {datos:resultado, errores};
+}
+
+function renderizar(d){
+  datos = d;
+  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  charts={};
+  renderKPI();
+  renderResumenGlobal();
+  renderPorTramo();
+  renderPorVehiculo();
+  renderPorSentido();
+  renderRaw();
+  renderCharts();
+  document.getElementById('fecha-gen').textContent = new Date().toLocaleDateString('es-PE',{year:'numeric',month:'long',day:'numeric'});
+}
+
+function renderKPI(){
+  const vels = datos.map(d=>d.vel);
+  const maxV = Math.max(...vels);
+  const minV = Math.min(...vels);
+  const maxD = datos.find(d=>d.vel===maxV);
+  const minD = datos.find(d=>d.vel===minV);
+  const tramos = [...new Set(datos.map(d=>d.tramo))];
+  const tipos  = [...new Set(datos.map(d=>d.tipo))];
+  const nIda   = datos.filter(d=>d.sentido==='IDA').length;
+  const nVuelta= datos.filter(d=>d.sentido==='VUELTA').length;
+  const dark = document.documentElement.getAttribute('data-theme')==='dark';
+  const C = dark ? COLORS_DARK : COLORS_LIGHT;
+  const cards=[
+    {label:'Total vehículos',     val:datos.length,           unit:'registros analizados',              c:C[0]},
+    {label:'Tramos analizados',   val:tramos.length,           unit:tramos.join(' · '),                 c:C[1]},
+    {label:'Vel. promedio global',val:avg(vels).toFixed(1),   unit:'km/h — todos los vehículos',        c:C[2]},
+    {label:'Vel. máxima',         val:maxV.toFixed(1),         unit:`km/h — ${maxD.tipo} / ${maxD.tramo}`,c:C[3]},
+    {label:'Vel. mínima',         val:minV.toFixed(1),         unit:`km/h — ${minD.tipo} / ${minD.tramo}`,c:C[4]},
+    {label:'Sentido IDA',         val:nIda,                    unit:'vehículos registrados',             c:C[0]},
+    {label:'Sentido VUELTA',      val:nVuelta,                 unit:'vehículos registrados',             c:C[3]},
+    {label:'Tipos de vehículo',   val:tipos.length,            unit:tipos.join(', '),                    c:C[2]},
+  ];
+  document.getElementById('kpi-grid').innerHTML = cards.map(c=>`
+    <div class="kpi-card" style="--c:${c.c}">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value">${c.val}</div>
+      <div class="kpi-unit">${c.unit}</div>
+    </div>`).join('');
+  const trDs = tramos.map(t=>{
+    const dist = datos.find(d=>d.tramo===t)?.dist||'?';
+    return `<span class="meta-pill">${t} | ${dist} km</span>`;
+  }).join('');
+  document.getElementById('header-meta').innerHTML =
+    trDs +
+    `<span class="meta-pill">Registros: ${datos.length}</span>` +
+    `<span class="meta-pill">${tipos.length} tipos de vehículo</span>`;
+}
+
+function renderResumenGlobal(){
+  const tramos = [...new Set(datos.map(d=>d.tramo))];
+  let tbody='', tfoot='';
+  let allVels=[], allIda=[], allVuelta=[];
+  tramos.forEach(t=>{
+    const td  = datos.filter(d=>d.tramo===t);
+    const dist= td[0]?.dist||'?';
+    const ida = td.filter(d=>d.sentido==='IDA');
+    const vuel= td.filter(d=>d.sentido==='VUELTA');
+    const avgVelIda  = avg(ida.map(d=>d.vel));
+    const avgVelVuel = avg(vuel.map(d=>d.vel));
+    const avgVelAll  = avg(td.map(d=>d.vel));
+    const avgTIda    = avg(ida.map(d=>tiempoAMin(d.tiempo)));
+    const avgTVuel   = avg(vuel.map(d=>tiempoAMin(d.tiempo)));
+    const avgTAll    = avg(td.map(d=>tiempoAMin(d.tiempo)));
+    allVels.push(...td.map(d=>d.vel));
+    allIda.push(...ida.map(d=>d.vel));
+    allVuelta.push(...vuel.map(d=>d.vel));
+    tbody+=`<tr>
+      <td><span class="tramo-badge">${t}</span></td>
+      <td class="num">${dist}</td>
+      <td class="num">${td.length}</td>
+      <td class="num" style="color:var(--ida)">${fmtVel(avgVelIda)}</td>
+      <td class="num" style="color:var(--ida)">${minAMmss(avgTIda)}</td>
+      <td class="num" style="color:var(--vuelta)">${fmtVel(avgVelVuel)}</td>
+      <td class="num" style="color:var(--vuelta)">${minAMmss(avgTVuel)}</td>
+      <td class="num" style="color:var(--ambos)">${fmtVel(avgVelAll)}</td>
+      <td class="num" style="color:var(--ambos)">${minAMmss(avgTAll)}</td>
+    </tr>`;
+  });
+  tfoot=`<tr>
+    <td colspan="2">PROMEDIO GENERAL</td>
+    <td class="num">${datos.length}</td>
+    <td class="num">${fmtVel(avg(allIda))}</td>
+    <td class="num">—</td>
+    <td class="num">${fmtVel(avg(allVuelta))}</td>
+    <td class="num">—</td>
+    <td class="num">${fmtVel(avg(allVels))}</td>
+    <td class="num">—</td>
+  </tr>`;
+  document.getElementById('tbody-resumen').innerHTML=tbody;
+  document.getElementById('tfoot-resumen').innerHTML=tfoot;
+}
+
+function renderPorTramo(){
+  const tramos = [...new Set(datos.map(d=>d.tramo))];
+  const dark = document.documentElement.getAttribute('data-theme')==='dark';
+  const C = dark ? COLORS_DARK : COLORS_LIGHT;
+  let html='';
+  tramos.forEach((t,ti)=>{
+    const td  = datos.filter(d=>d.tramo===t);
+    const dist= td[0]?.dist||'?';
+    const tipos= [...new Set(td.map(d=>d.tipo))].sort();
+    const tableId=`tbl-tramo-${t.replace(/[^a-z0-9]/gi,'_')}`;
+    let tbody='';
+    tipos.forEach(tipo=>{
+      const tv  = td.filter(d=>d.tipo===tipo);
+      const ida = tv.filter(d=>d.sentido==='IDA');
+      const vuel= tv.filter(d=>d.sentido==='VUELTA');
+      const avgVI=avg(ida.map(d=>d.vel));
+      const avgVV=avg(vuel.map(d=>d.vel));
+      const avgVT=avg(tv.map(d=>d.vel));
+      const avgTI=avg(ida.map(d=>tiempoAMin(d.tiempo)));
+      const avgTV2=avg(vuel.map(d=>tiempoAMin(d.tiempo)));
+      const avgTT=avg(tv.map(d=>tiempoAMin(d.tiempo)));
+      tbody+=`<tr>
+        <td><strong>${tipo}</strong></td>
+        <td class="num" style="color:var(--ida)">${ida.length||'—'}</td>
+        <td class="num" style="color:var(--ida)">${fmtVel(avgVI)}</td>
+        <td class="num" style="color:var(--ida)">${minAMmss(avgTI)}</td>
+        <td class="num" style="color:var(--vuelta)">${vuel.length||'—'}</td>
+        <td class="num" style="color:var(--vuelta)">${fmtVel(avgVV)}</td>
+        <td class="num" style="color:var(--vuelta)">${minAMmss(avgTV2)}</td>
+        <td class="num">${tv.length}</td>
+        <td class="num highlight">${fmtVel(avgVT)}</td>
+        <td class="num highlight">${minAMmss(avgTT)}</td>
+      </tr>`;
+    });
+    const ida =td.filter(d=>d.sentido==='IDA');
+    const vuel=td.filter(d=>d.sentido==='VUELTA');
+    const tfoot=`<tr>
+      <td>PROMEDIO TRAMO ${t}</td>
+      <td class="num">${ida.length}</td>
+      <td class="num">${fmtVel(avg(ida.map(d=>d.vel)))}</td>
+      <td class="num">${minAMmss(avg(ida.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num">${vuel.length}</td>
+      <td class="num">${fmtVel(avg(vuel.map(d=>d.vel)))}</td>
+      <td class="num">${minAMmss(avg(vuel.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num">${td.length}</td>
+      <td class="num">${fmtVel(avg(td.map(d=>d.vel)))}</td>
+      <td class="num">${minAMmss(avg(td.map(d=>tiempoAMin(d.tiempo))))}</td>
+    </tr>`;
+    html+=`
+      <div class="tramo-heading" style="border-left:4px solid ${C[ti%C.length]}">
+        <span style="color:${C[ti%C.length]}">Tramo ${t}</span>
+        <span class="tramo-meta">${dist} km · ${td.length} vehículos</span>
+      </div>
+      <div class="table-wrap" style="margin-bottom:36px;">
+        <table id="${tableId}">
+          <thead><tr>
+            <th>Tipo Vehículo</th>
+            <th class="num">N° IDA</th><th class="num">Vel. IDA (km/h)</th><th class="num">T. IDA</th>
+            <th class="num">N° VUELTA</th><th class="num">Vel. VUELTA (km/h)</th><th class="num">T. VUELTA</th>
+            <th class="num">N° Total</th><th class="num">Vel. Prom. (km/h)</th><th class="num">T. Prom.</th>
+          </tr></thead>
+          <tbody>${tbody}</tbody>
+          <tfoot>${tfoot}</tfoot>
+        </table>
+      </div>`;
+  });
+  document.getElementById('tramos-container').innerHTML=html;
+}
+
+function renderPorVehiculo(){
+  const tipos=[...new Set(datos.map(d=>d.tipo))].sort();
+  let tbody='';
+  tipos.forEach(tipo=>{
+    const tv  =datos.filter(d=>d.tipo===tipo);
+    const ida =tv.filter(d=>d.sentido==='IDA');
+    const vuel=tv.filter(d=>d.sentido==='VUELTA');
+    const pct =(tv.length/datos.length*100).toFixed(1)+'%';
+    tbody+=`<tr>
+      <td><strong>${tipo}</strong></td>
+      <td class="num">${tv.length}</td>
+      <td class="num" style="color:var(--ida)">${ida.length||'—'}</td>
+      <td class="num" style="color:var(--ida)">${fmtVel(avg(ida.map(d=>d.vel)))}</td>
+      <td class="num" style="color:var(--vuelta)">${vuel.length||'—'}</td>
+      <td class="num" style="color:var(--vuelta)">${fmtVel(avg(vuel.map(d=>d.vel)))}</td>
+      <td class="num highlight">${fmtVel(avg(tv.map(d=>d.vel)))}</td>
+      <td class="num">${pct}</td>
+    </tr>`;
+  });
+  const ida =datos.filter(d=>d.sentido==='IDA');
+  const vuel=datos.filter(d=>d.sentido==='VUELTA');
+  const tfoot=`<tr>
+    <td>PROMEDIO GLOBAL</td>
+    <td class="num">${datos.length}</td>
+    <td class="num">${ida.length}</td>
+    <td class="num">${fmtVel(avg(ida.map(d=>d.vel)))}</td>
+    <td class="num">${vuel.length}</td>
+    <td class="num">${fmtVel(avg(vuel.map(d=>d.vel)))}</td>
+    <td class="num">${fmtVel(avg(datos.map(d=>d.vel)))}</td>
+    <td class="num">100%</td>
+  </tr>`;
+  document.getElementById('tbody-vehiculos').innerHTML=tbody;
+  document.getElementById('tfoot-vehiculos').innerHTML=tfoot;
+}
+
+function renderPorSentido(){
+  const tipos=[...new Set(datos.map(d=>d.tipo))].sort();
+  const ida  =datos.filter(d=>d.sentido==='IDA');
+  const vuel =datos.filter(d=>d.sentido==='VUELTA');
+  document.getElementById('sentido-cards').innerHTML=`
+    <div class="sentido-card" style="border-color:rgba(0,213,240,0.3)">
+      <div style="font-family:'Google Sans';font-size:15px;font-weight:600;color:var(--ida);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">Sentido IDA</div>
+      <table style="font-size:13px;width:100%">
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Total vehículos</td><td class="num">${ida.length}</td></tr>
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Vel. promedio</td><td class="num" style="color:var(--ida)">${fmtVel(avg(ida.map(d=>d.vel)))} km/h</td></tr>
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Vel. máxima</td><td class="num">${fmtVel(Math.max(...ida.map(d=>d.vel)))} km/h</td></tr>
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Vel. mínima</td><td class="num">${fmtVel(Math.min(...ida.map(d=>d.vel)))} km/h</td></tr>
+      </table>
+    </div>
+    <div class="sentido-card" style="border-color:rgba(255,113,85,0.3)">
+      <div style="font-family:'Google Sans';font-size:15px;font-weight:600;color:var(--vuelta);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">Sentido VUELTA / SALIDA</div>
+      <table style="font-size:13px;width:100%">
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Total vehículos</td><td class="num">${vuel.length}</td></tr>
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Vel. promedio</td><td class="num" style="color:var(--vuelta)">${fmtVel(avg(vuel.map(d=>d.vel)))} km/h</td></tr>
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Vel. máxima</td><td class="num">${vuel.length?fmtVel(Math.max(...vuel.map(d=>d.vel))):'—'} km/h</td></tr>
+        <tr><td style="color:var(--md-sys-color-on-surface-var)">Vel. mínima</td><td class="num">${vuel.length?fmtVel(Math.min(...vuel.map(d=>d.vel))):'—'} km/h</td></tr>
+      </table>
+    </div>`;
+  let tbody='';
+  tipos.forEach(tipo=>{
+    const ti=ida.filter(d=>d.tipo===tipo);
+    const tv=vuel.filter(d=>d.tipo===tipo);
+    const avgVI=avg(ti.map(d=>d.vel));
+    const avgVV=avg(tv.map(d=>d.vel));
+    const diff=(avgVI!==null&&avgVV!==null)?(avgVI-avgVV).toFixed(2):'—';
+    const diffColor=diff!=='—'?(parseFloat(diff)>=0?'color:var(--md-sys-color-success)':'color:var(--md-sys-color-tertiary)'):'';
+    tbody+=`<tr>
+      <td><strong>${tipo}</strong></td>
+      <td class="num" style="color:var(--ida)">${ti.length||'—'}</td>
+      <td class="num" style="color:var(--ida)">${fmtVel(avgVI)}</td>
+      <td class="num" style="color:var(--ida)">${minAMmss(avg(ti.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num" style="color:var(--vuelta)">${tv.length||'—'}</td>
+      <td class="num" style="color:var(--vuelta)">${fmtVel(avgVV)}</td>
+      <td class="num" style="color:var(--vuelta)">${minAMmss(avg(tv.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num" style="${diffColor}">${diff}</td>
+    </tr>`;
+  });
+  const tfoot=`<tr>
+    <td>TOTAL / PROMEDIO</td>
+    <td class="num">${ida.length}</td>
+    <td class="num">${fmtVel(avg(ida.map(d=>d.vel)))}</td>
+    <td class="num">${minAMmss(avg(ida.map(d=>tiempoAMin(d.tiempo))))}</td>
+    <td class="num">${vuel.length}</td>
+    <td class="num">${fmtVel(avg(vuel.map(d=>d.vel)))}</td>
+    <td class="num">${minAMmss(avg(vuel.map(d=>tiempoAMin(d.tiempo))))}</td>
+    <td class="num">—</td>
+  </tr>`;
+  document.getElementById('tbody-sentido').innerHTML=tbody;
+  document.getElementById('tfoot-sentido').innerHTML=tfoot;
+}
+
+function renderRaw(){
+  const tbody=document.getElementById('tbody-raw');
+  tbody.innerHTML='';
+  datos.forEach((d,i)=>{
+    const ida=d.sentido==='IDA';
+    const velC=d.vel>=50?'spd-high':d.vel>=40?'spd-mid':'spd-low';
+    const tr=document.createElement('tr');
+    tr.className=ida?'raw-row-ida':'raw-row-vuelta';
+    tr.innerHTML=`
+      <td style="color:var(--md-sys-color-on-surface-var);font-family:'Google Sans Mono',monospace;font-size:11px">${String(i+1).padStart(2,'0')}</td>
+      <td><span class="tramo-badge">${d.tramo}</span></td>
+      <td class="num">${d.dist}</td>
+      <td style="font-family:'Google Sans Mono',monospace;font-size:12px">${d.ini}</td>
+      <td style="font-family:'Google Sans Mono',monospace;font-size:12px">${d.fin}</td>
+      <td style="font-family:'Google Sans Mono',monospace;font-size:12px;font-weight:600">${d.id}</td>
+      <td><strong>${d.tipo}</strong></td>
+      <td><span class="tag ${ida?'tag-ida':'tag-vuelta'}">${d.sentido}</span></td>
+      <td class="num" style="font-family:'Google Sans Mono',monospace">${d.tiempo}</td>
+      <td class="num ${velC}" style="font-weight:700">${d.vel.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderCharts(){
+  const D=getChartDefaults();
+  Chart.defaults.color=D.color;
+  Chart.defaults.borderColor=D.border;
+  Chart.defaults.font.family="'Google Sans', sans-serif";
+
+  // Destruir previos
+  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  charts={};
+
+  const tipos =[...new Set(datos.map(d=>d.tipo))].sort();
+  const tramos=[...new Set(datos.map(d=>d.tramo))];
+
+  // 1. Velocidad por tipo de vehículo
+  charts['vel-vehiculo']=new Chart(document.getElementById('chart-vel-vehiculo'),{
+    type:'bar',
+    data:{labels:tipos,datasets:[
+      {label:'IDA',    data:tipos.map(t=>avg(datos.filter(d=>d.tipo===t&&d.sentido==='IDA').map(d=>d.vel))),    backgroundColor:D.ida,    borderColor:D.idaBorder,    borderWidth:1.5},
+      {label:'VUELTA', data:tipos.map(t=>avg(datos.filter(d=>d.tipo===t&&d.sentido==='VUELTA').map(d=>d.vel))), backgroundColor:D.vuelta,  borderColor:D.vueltaBorder, borderWidth:1.5},
+      {label:'GLOBAL', data:tipos.map(t=>avg(datos.filter(d=>d.tipo===t).map(d=>d.vel))),                       backgroundColor:D.global,  borderColor:D.globalBorder, borderWidth:1.5},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:D.color,font:{size:11}}}},
+      scales:{y:{grid:{color:D.border},ticks:{color:D.color},title:{display:true,text:'km/h',color:D.color}},
+              x:{grid:{color:D.border},ticks:{color:D.textOnBars}}}}
+  });
+
+  // 2. Distribución sentido
+  const nIda =datos.filter(d=>d.sentido==='IDA').length;
+  const nVuel=datos.filter(d=>d.sentido==='VUELTA').length;
+  charts['dist-sentido']=new Chart(document.getElementById('chart-dist-sentido'),{
+    type:'doughnut',
+    data:{labels:[`IDA (${nIda})`,`VUELTA (${nVuel})`],datasets:[{
+      data:[nIda,nVuel],backgroundColor:[D.ida,D.vuelta],borderColor:[D.idaBorder,D.vueltaBorder],borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{labels:{color:D.color,font:{size:12}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} vehículos`}}}}
+  });
+
+  // 3. Velocidad por tramo
+  const tramosLabel=tramos.map(t=>{const d=datos.find(x=>x.tramo===t);return `${t} (${d?.dist||'?'} km)`;});
+  charts['vel-tramo']=new Chart(document.getElementById('chart-vel-tramo'),{
+    type:'bar',
+    data:{labels:tramosLabel,datasets:[
+      {label:'IDA',    data:tramos.map(t=>avg(datos.filter(d=>d.tramo===t&&d.sentido==='IDA').map(d=>d.vel))),    backgroundColor:D.ida,    borderColor:D.idaBorder,    borderWidth:1.5},
+      {label:'VUELTA', data:tramos.map(t=>avg(datos.filter(d=>d.tramo===t&&d.sentido==='VUELTA').map(d=>d.vel))), backgroundColor:D.vuelta,  borderColor:D.vueltaBorder, borderWidth:1.5},
+      {label:'GLOBAL', data:tramos.map(t=>avg(datos.filter(d=>d.tramo===t).map(d=>d.vel))),                       backgroundColor:D.global,  borderColor:D.globalBorder, borderWidth:1.5},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:D.color,font:{size:11}}}},
+      scales:{y:{grid:{color:D.border},ticks:{color:D.color},title:{display:true,text:'km/h',color:D.color}},
+              x:{grid:{color:D.border},ticks:{color:D.textOnBars}}}}
+  });
+
+  // 4. Composición vehicular
+  const C=getColors();
+  const compCants=tipos.map(t=>datos.filter(d=>d.tipo===t).length);
+  charts['composicion']=new Chart(document.getElementById('chart-composicion'),{
+    type:'pie',
+    data:{labels:tipos.map((t,i)=>`${t} (${compCants[i]})`),datasets:[{
+      data:compCants,backgroundColor:C.slice(0,tipos.length),borderColor:'transparent',borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{labels:{color:D.color,font:{size:11}}}}}
+  });
+
+  // 5. Velocidades individuales
+  const colorsSc=datos.map(d=>d.sentido==='IDA'?D.ida:D.vuelta);
+  const borderSc=datos.map(d=>d.sentido==='IDA'?D.idaBorder:D.vueltaBorder);
+  charts['scatter']=new Chart(document.getElementById('chart-scatter'),{
+    type:'bar',
+    data:{labels:datos.map(d=>d.id),datasets:[{
+      label:'Velocidad (km/h)',data:datos.map(d=>d.vel),
+      backgroundColor:colorsSc,borderColor:borderSc,borderWidth:1.5,borderRadius:4
+    }]},
+    options:{responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const d=datos[ctx.dataIndex];
+        return [`${d.vel.toFixed(2)} km/h`,`${d.tipo} — ${d.sentido}`,`Tramo: ${d.tramo}`];
+      }}}},
+      scales:{y:{grid:{color:D.border},ticks:{color:D.color},title:{display:true,text:'km/h',color:D.color}},
+              x:{grid:{color:D.border},ticks:{color:D.textOnBars,font:{size:10}}}}}
+  });
+}
+
+// ── BOTONES ──
+function analizarDatos(){
+  const texto=document.getElementById('paste-area').value;
+  const status=document.getElementById('parse-status');
+  if(!texto.trim()){
+    status.style.display='inline-block';
+    status.className='status-err';
+    status.textContent='Sin datos. Pegue datos de Excel primero.';
+    return;
+  }
+  try{
+    const {datos:d,errores}=parsearPaste(texto);
+    renderizar(d);
+    document.getElementById('report').style.display='block';
+    document.getElementById('empty-state').style.display='none';
+    status.style.display='inline-block';
+    status.className='status-ok';
+    status.textContent=`${d.length} registros analizados${errores.length?` (${errores.length} filas ignoradas)`:''}`;
+    setTimeout(()=>document.getElementById('resumen').scrollIntoView({behavior:'smooth'}),100);
+  }catch(e){
+    status.style.display='inline-block';
+    status.className='status-err';
+    status.textContent=e.message;
+  }
+}
+
+function limpiarTodo(){
+  document.getElementById('paste-area').value='';
+  document.getElementById('parse-status').style.display='none';
+  document.getElementById('report').style.display='none';
+  document.getElementById('empty-state').style.display='block';
+  datos=[];
+  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  charts={};
+  document.getElementById('header-meta').innerHTML='<span class="meta-pill" style="opacity:.5">Sin datos cargados</span>';
+}
+
+// ── EXPORTACIONES ──
+function tableToAoA(tableId){
+  const table=document.getElementById(tableId);
+  if(!table) return [];
+  const rows=[];
+  table.querySelectorAll('tr').forEach(tr=>{
+    const row=[];
+    tr.querySelectorAll('th,td').forEach(cell=>row.push(cell.innerText.trim()));
+    rows.push(row);
+  });
+  return rows;
+}
+function exportSheet(sheetData,sheetName,fileName){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(sheetData);
+  ws['!cols']=sheetData[0]?.map(()=>({wch:20}))||[];
+  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  XLSX.writeFile(wb,fileName);
+}
+function exportResumenGlobal(){exportSheet(tableToAoA('tbl-resumen-global'),'Resumen Global','Resumen_Global_Transito.xlsx')}
+function exportPorVehiculo(){   exportSheet(tableToAoA('tbl-vehiculos'),'Por Tipo Vehiculo','Analisis_Por_Vehiculo.xlsx')}
+function exportPorSentido(){    exportSheet(tableToAoA('tbl-sentido'),'Por Sentido','Analisis_Por_Sentido.xlsx')}
+function exportPorTramo(){
+  const wb=XLSX.utils.book_new();
+  document.querySelectorAll('[id^="tbl-tramo-"]').forEach(tbl=>{
+    const name=tbl.id.replace('tbl-tramo-','').slice(0,31);
+    const ws=XLSX.utils.aoa_to_sheet(tableToAoA(tbl.id));
+    ws['!cols']=Array(10).fill({wch:18});
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  XLSX.writeFile(wb,'Analisis_Por_Tramo.xlsx');
+}
+function exportDatosCrudos(){
+  const rows=[['#','Tramo','Dist.(km)','Hora Inicio','Hora Fin','ID/Placa','Tipo','Sentido','Tiempo','Velocidad(km/h)']];
+  datos.forEach((d,i)=>rows.push([i+1,d.tramo,d.dist,d.ini,d.fin,d.id,d.tipo,d.sentido,d.tiempo,d.vel]));
+  exportSheet(rows,'Datos Originales','Datos_Originales_Transito.xlsx');
+}
+function exportFullReport(){
+  const wb=XLSX.utils.book_new();
+  [['tbl-resumen-global','Resumen Global',9],['tbl-vehiculos','Por Tipo Vehiculo',8],['tbl-sentido','Por Sentido',8]].forEach(([id,name,cols])=>{
+    const ws=XLSX.utils.aoa_to_sheet(tableToAoA(id));
+    ws['!cols']=Array(cols).fill({wch:20});
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  document.querySelectorAll('[id^="tbl-tramo-"]').forEach(tbl=>{
+    const ws=XLSX.utils.aoa_to_sheet(tableToAoA(tbl.id));
+    ws['!cols']=Array(10).fill({wch:18});
+    XLSX.utils.book_append_sheet(wb,ws,tbl.id.replace('tbl-tramo-','').slice(0,31));
+  });
+  const rows=[['#','Tramo','Dist.(km)','Hora Inicio','Hora Fin','ID/Placa','Tipo','Sentido','Tiempo','Velocidad(km/h)']];
+  datos.forEach((d,i)=>rows.push([i+1,d.tramo,d.dist,d.ini,d.fin,d.id,d.tipo,d.sentido,d.tiempo,d.vel]));
+  const ws6=XLSX.utils.aoa_to_sheet(rows);
+  ws6['!cols']=Array(10).fill({wch:18});
+  XLSX.utils.book_append_sheet(wb,ws6,'Datos Originales');
+  XLSX.writeFile(wb,'Informe_Completo_Transito.xlsx');
+}
+function exportAllCharts(){
+  ['chart-vel-vehiculo','chart-dist-sentido','chart-vel-tramo','chart-composicion','chart-scatter'].forEach((id,i)=>{
+    const canvas=document.getElementById(id);
+    if(!canvas) return;
+    const link=document.createElement('a');
+    link.href=canvas.toDataURL('image/png');
+    link.download=`Grafica_${i+1}_${id}.png`;
+    link.click();
+  });
+}
+
+// Ctrl+Enter en textarea
+document.getElementById('paste-area').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) analizarDatos();
+});
+</script>
+</body>
+</html>
