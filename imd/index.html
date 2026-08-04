@@ -1,1 +1,1455 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="initial-scale=1, width=device-width">
+<title>Estudio de Tráfico - IMD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Roboto:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   MATERIAL 3 EXPRESSIVE — DESIGN TOKENS (tema claro por defecto)
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  color-scheme: light;
+  --color-primary: #0B57D0;
+  --color-on-primary:            oklch(from var(--color-primary) 98% 0.01 h);
+  --color-primary-container:     oklch(from var(--color-primary) 88% calc(c * 0.55) h);
+  --color-on-primary-container:  oklch(from var(--color-primary) 22% calc(c * 0.55) h);
+  --color-secondary:             oklch(from var(--color-primary) 50% calc(c * 0.25) h);
+  --color-secondary-container:   oklch(from var(--color-primary) 91% calc(c * 0.15) h);
+  --color-on-secondary-container:oklch(from var(--color-primary) 22% calc(c * 0.28) h);
+  --color-tertiary-container:    oklch(from var(--color-primary) 90% calc(c * 0.12) calc(h + 40));
+  --color-on-tertiary-container: oklch(from var(--color-primary) 20% calc(c * 0.2) calc(h + 40));
+
+  --color-background:            oklch(from var(--color-primary) 99% 0.004 h);
+  --color-on-background:         oklch(from var(--color-primary) 16% 0.01  h);
+  --color-surface-0:             oklch(from var(--color-primary) 100% 0 h);
+  --color-surface-1:             oklch(from var(--color-primary) 96.5% 0.006 h);
+  --color-surface-2:             oklch(from var(--color-primary) 93% 0.009 h);
+  --color-surface-variant:       oklch(from var(--color-primary) 88% 0.02 h);
+  --color-on-surface:            oklch(from var(--color-primary) 16% 0.01  h);
+  --color-on-surface-variant:    oklch(from var(--color-primary) 42% 0.02  h);
+  --color-on-surface-variant-2:  oklch(from var(--color-primary) 42% 0.02 h / 0.08);
+  --color-on-surface-variant-4:  oklch(from var(--color-primary) 42% 0.02 h / 0.12);
+  --color-outline:               oklch(from var(--color-primary) 55% 0.018 h);
+
+  --color-do:   #1e8e3e; --color-on-do:   #ffffff;
+  --color-warn: #b7791f; --color-on-warn: #ffffff;
+  --color-dont: #d93025; --color-on-dont: #ffffff;
+
+  --elevation-1: 0px 1px 2px rgba(0,0,0,.30), 0px 1px 3px 1px rgba(0,0,0,.15);
+  --elevation-2: 0px 1px 2px rgba(0,0,0,.30), 0px 2px 6px 2px rgba(0,0,0,.15);
+  --elevation-3: 0px 4px 8px 3px rgba(0,0,0,.15), 0px 1px 3px rgba(0,0,0,.30);
+
+  --motion-standard:   cubic-bezier(.2,0,0,1);
+  --motion-emphasized: cubic-bezier(.2,0,0,1);
+  --motion-decelerate: cubic-bezier(0,0,0,1);
+  --duration-short1: 50ms; --duration-short2: 100ms;
+  --duration-medium1: 200ms; --duration-medium2: 300ms;
+  --duration-long1: 450ms; --duration-long2: 500ms;
+
+  --font-display: "Google Sans", "Roboto", sans-serif;
+  --font-text: "Roboto", "Google Sans", sans-serif;
+
+  --shape-extra-small: 4px; --shape-small: 8px; --shape-medium: 12px;
+  --shape-large: 16px; --shape-extra-large: 28px; --shape-full: 9999px;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%}
+body{font-family:var(--font-text);font-size:12.5px;margin:0;background:var(--color-background);color:var(--color-on-background);-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.ms{font-family:"Material Symbols Outlined";font-size:20px;line-height:1;display:inline-block;user-select:none;vertical-align:middle}
+
+/* ─── TOP APP BAR ─────────────────────────────────────────────────────── */
+.top-bar{position:sticky;top:0;z-index:200;min-height:60px;display:flex;align-items:center;gap:16px;padding:0 16px;background:var(--color-surface-0);box-shadow:var(--elevation-1)}
+.top-bar-title{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:600;color:var(--color-on-surface);white-space:nowrap}
+.top-bar-title .md-logo{width:34px;height:34px;border-radius:50%;background:var(--color-primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.top-bar-title .md-logo .ms{color:var(--color-on-primary);font-size:20px}
+.top-bar-title .title-full{font-size:19px}
+.top-bar-title .title-short{font-size:19px;display:none}
+.top-bar-spacer{flex:1}
+
+/* ─── TABS DESKTOP ────────────────────────────────────────────────────── */
+.tabs-desktop{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:8px 0}
+.tabs-desktop::-webkit-scrollbar{display:none}
+.tabbtn{position:relative;overflow:hidden;flex:0 0 auto;padding:9px 18px;border:none;border-radius:var(--shape-full);background:transparent;color:var(--color-on-surface-variant);font-family:var(--font-display);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background var(--duration-medium1) var(--motion-standard),color var(--duration-medium1) var(--motion-standard)}
+.tabbtn:hover{background:var(--color-on-surface-variant-2);color:var(--color-on-surface)}
+.tabbtn.active{background:var(--color-secondary-container);color:var(--color-on-secondary-container)}
+
+/* ─── MOBILE DROPDOWN (M3 Expressive menu) ───────────────────────────── */
+.mobile-tab-dropdown{display:none;position:relative}
+.mobile-tab-btn{display:flex;align-items:center;gap:6px;height:38px;padding:0 14px;border:none;border-radius:var(--shape-full);background:var(--color-secondary-container);color:var(--color-on-secondary-container);font-family:var(--font-display);font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;box-shadow:var(--elevation-1);transition:box-shadow var(--duration-medium1) var(--motion-standard)}
+.mobile-tab-btn.open{box-shadow:var(--elevation-3)}
+.mobile-tab-chevron{font-size:18px;transition:transform var(--duration-medium2) var(--motion-emphasized)}
+.mobile-tab-btn.open .mobile-tab-chevron{transform:rotate(180deg)}
+.mobile-menu-surface{position:absolute;top:calc(100% + 8px);right:0;min-width:230px;max-height:70vh;overflow-y:auto;z-index:300;background:var(--color-surface-0);border-radius:var(--shape-large);box-shadow:var(--elevation-3);transform-origin:top right;transform:scale(.85);opacity:0;pointer-events:none;transition:transform var(--duration-medium2) var(--motion-emphasized),opacity var(--duration-medium1) var(--motion-decelerate)}
+.mobile-menu-surface.open{transform:scale(1);opacity:1;pointer-events:auto}
+.mobile-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:12px 16px;border:none;background:transparent;text-align:left;color:var(--color-on-surface);font-family:var(--font-text);font-size:13px;font-weight:400;cursor:pointer;transition:background var(--duration-short2) var(--motion-standard)}
+.mobile-menu-item:hover{background:var(--color-on-surface-variant-2)}
+.mobile-menu-item.active{background:var(--color-secondary-container);color:var(--color-on-secondary-container);font-weight:500}
+.mobile-menu-item .menu-check{margin-left:auto;font-size:16px;opacity:0}
+.mobile-menu-item.active .menu-check{opacity:1}
+
+/* ─── PAGE CONTAINER ──────────────────────────────────────────────────── */
+.page-container{max-width:1400px;margin:0 auto;padding:20px 18px 20px;flex:1 1 auto;display:flex;flex-direction:column;width:100%}
+
+/* ─── TAB PANELS ──────────────────────────────────────────────────────── */
+.tabpanel{display:none}
+.tabpanel.active{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;animation:panelIn var(--duration-long1) var(--motion-decelerate) both}
+@keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── CONTROLS BAR ────────────────────────────────────────────────────── */
+.bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;background:var(--color-surface-1);border-radius:var(--shape-large);padding:12px 16px}
+select,input{padding:7px 10px;font-family:var(--font-text);font-size:12.5px;border:1px solid var(--color-outline);border-radius:var(--shape-small);background:var(--color-surface-0);color:var(--color-on-surface)}
+select:focus,input:focus{outline:2px solid var(--color-primary);outline-offset:1px}
+input[type=number]{width:64px}
+input[type=text]{width:150px}
+
+/* ─── TABLES ──────────────────────────────────────────────────────────── */
+/* Sin scroll interno vertical: cada tabla crece con la página; solo existe
+   el scroll general de la pestaña. El horizontal queda como último recurso
+   (se minimiza reduciendo tipografía/padding en los breakpoints de abajo). */
+.wrap{overflow-x:auto;border:1px solid var(--color-surface-variant);border-radius:var(--shape-large);margin-bottom:16px;background:var(--color-surface-0)}
+table{border-collapse:collapse;width:100%;background:var(--color-surface-0)}
+th,td{border:1px solid var(--color-surface-variant);text-align:center;padding:5px 6px;min-width:38px}
+th{background:var(--color-primary);color:var(--color-on-primary);font-size:11px;font-weight:500;font-family:var(--font-display)}
+td[contenteditable]{outline:none}
+td[contenteditable]:focus{background:var(--color-primary-container)}
+tr.entrada td{background:oklch(from var(--color-do) 96% 0.03 h)}
+tr.salida td{background:oklch(from var(--color-dont) 96% 0.02 h)}
+.hora{font-weight:600;background:var(--color-surface-2)!important}
+.totrow td{font-weight:600;background:var(--color-secondary-container)!important}
+.tipo{font-weight:600;width:30px}
+
+/* ─── NOTAS / KPI / BADGES ────────────────────────────────────────────── */
+.nota{background:var(--color-tertiary-container);color:var(--color-on-tertiary-container);border-left:4px solid var(--color-primary);border-radius:var(--shape-small);padding:10px 14px;margin-bottom:14px;font-size:11.5px}
+.kpi{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.kpi div{background:var(--color-surface-1);border:1px solid var(--color-surface-variant);border-radius:var(--shape-large);padding:10px 16px;min-width:130px;transition:box-shadow var(--duration-medium1) var(--motion-standard)}
+.kpi div:hover{box-shadow:var(--elevation-1)}
+.kpi b{display:block;font-size:17px;font-family:var(--font-display);color:var(--color-primary)}
+.badge{padding:4px 10px;border-radius:var(--shape-full);font-weight:600;color:#fff;font-size:11px}
+.ok{background:var(--color-do)}.warn{background:var(--color-warn)}.bad{background:var(--color-dont)}
+
+/* ─── CHARTS ──────────────────────────────────────────────────────────── */
+.chartsGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:1100px){.chartsGrid{grid-template-columns:1fr}}
+.chartCard{position:relative;justify-self:start;max-width:100%;background:var(--color-surface-0);border:1px solid var(--color-surface-variant);border-radius:var(--shape-large);padding:14px;box-shadow:var(--elevation-1)}
+.chartCard.full{grid-column:1/-1}
+.copyBtn{position:absolute;top:12px;right:14px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;padding:0;border:none;background:var(--color-surface-2);color:var(--color-on-surface-variant);border-radius:50%;cursor:pointer;z-index:2;transition:background var(--duration-short2) var(--motion-standard),color var(--duration-short2) var(--motion-standard)}
+.copyBtn .ms{font-size:16px}
+.copyBtn:hover{background:var(--color-secondary-container);color:var(--color-on-secondary-container)}
+.copyBtn.success{background:oklch(from var(--color-do) 92% 0.04 h);color:var(--color-do)}
+.chartHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.chartHead h4{margin:0;font-size:13.5px;font-family:var(--font-display);color:var(--color-on-surface)}
+.chartHead .sub{font-size:10.5px;color:var(--color-on-surface-variant);display:block;margin-top:2px}
+.chartWrap{overflow-x:hidden}
+canvas{display:block;max-width:100%;height:auto!important}
+.copiedFlash{color:var(--color-do);font-weight:600}
+
+/* ─── FAB SPEED-DIAL — Exportar / Cargar datos ────────────────────────── */
+.fab-speeddial{position:relative;margin-top:auto;padding-top:16px;margin-bottom:0;display:flex;flex-direction:column;align-items:flex-end;gap:10px;z-index:50}
+.fab-options{display:flex;flex-direction:column;align-items:flex-end;gap:10px;max-height:0;overflow:hidden;transition:max-height var(--duration-medium2) var(--motion-emphasized)}
+.fab-speeddial.open .fab-options{max-height:220px}
+.fab-option{display:flex;align-items:center;gap:8px;height:44px;padding:0 18px 0 16px;border:none;border-radius:var(--shape-full);background:var(--color-surface-0);color:var(--color-on-surface);font-family:var(--font-display);font-weight:500;font-size:12.5px;cursor:pointer;box-shadow:var(--elevation-2);white-space:nowrap;
+  opacity:0;transform:translateY(10px) scale(.9);pointer-events:none;
+  transition:opacity var(--duration-medium1) var(--motion-standard),transform var(--duration-medium2) var(--motion-emphasized),box-shadow var(--duration-medium1) var(--motion-standard)}
+.fab-option .ms{font-size:19px;color:var(--color-primary)}
+.fab-option:hover{box-shadow:var(--elevation-3);background:var(--color-secondary-container)}
+.fab-speeddial.open .fab-option{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.fab-speeddial.open .fab-options .fab-option:nth-child(1){transition-delay:40ms}
+.fab-speeddial.open .fab-options .fab-option:nth-child(2){transition-delay:90ms}
+.fab-main{width:56px;height:56px;border:none;border-radius:var(--shape-large);background:var(--color-primary);color:var(--color-on-primary);box-shadow:var(--elevation-2);cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;transition:box-shadow var(--duration-medium1) var(--motion-standard),background var(--duration-medium1) var(--motion-standard)}
+.fab-main:hover{box-shadow:var(--elevation-3)}
+.fab-main .ms{position:absolute;font-size:26px;transition:opacity var(--duration-medium1) var(--motion-standard),transform var(--duration-medium2) var(--motion-emphasized)}
+.fab-main .fab-icon-close{opacity:0;transform:scale(.4) rotate(-45deg)}
+.fab-speeddial.open .fab-main .fab-icon-open{opacity:0;transform:scale(.4) rotate(45deg)}
+.fab-speeddial.open .fab-main .fab-icon-close{opacity:1;transform:scale(1) rotate(0)}
+.fab-speeddial.open .fab-main{background:var(--color-dont)}
+#datosMsg{font-weight:600;font-size:11.5px;background:var(--color-surface-0);padding:7px 14px;border-radius:var(--shape-full);box-shadow:var(--elevation-1);max-width:260px;text-align:right}
+#datosMsg.ok{color:var(--color-do)}
+#datosMsg.bad{color:var(--color-dont)}
+#datosMsg:empty{display:none}
+
+/* ─── CHIPS DE ESTADO Auto/Manual (reemplazan a 🔵 / ✏️) ──────────────── */
+.fieldAuto{color:var(--color-do)!important;font-weight:600}
+.fieldManual{color:#1565C0!important;font-weight:600}
+select.fieldAuto,select.fieldManual{font-weight:600}
+
+/* ─── BOTONES DE ICONO — añadir / eliminar estación ───────────────────── */
+.delEstBtn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:6px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:var(--color-on-primary);cursor:pointer;vertical-align:middle;transition:background var(--duration-short2) var(--motion-standard),transform var(--duration-short2) var(--motion-standard)}
+.delEstBtn .ms{font-size:15px}
+.delEstBtn:hover{background:var(--color-dont);transform:scale(1.08)}
+.addEstBtn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:none;border-radius:50%;background:var(--color-do);color:#fff;cursor:pointer;box-shadow:var(--elevation-1);transition:box-shadow var(--duration-short2) var(--motion-standard),transform var(--duration-short2) var(--motion-standard)}
+.addEstBtn:hover{box-shadow:var(--elevation-2);transform:scale(1.08)}
+.addEstBtn .ms{font-size:18px}
+
+/* ─── MODAL ───────────────────────────────────────────────────────────── */
+.modalOverlay{position:fixed;inset:0;background:rgba(20,30,40,.45);display:flex;align-items:center;justify-content:center;z-index:1000;animation:modalFade .15s ease}
+.modalBox{background:var(--color-surface-0);border-radius:var(--shape-extra-large);padding:22px 24px;max-width:440px;width:90%;box-shadow:var(--elevation-3)}
+.modalBox h4{margin:0 0 10px;color:var(--color-on-surface);font-family:var(--font-display);font-size:16px}
+.modalBox p{margin:0 0 20px;font-size:12.5px;line-height:1.55;color:var(--color-on-surface-variant)}
+.modalBtns{display:flex;justify-content:flex-end;gap:8px}
+.modalBtn{padding:9px 18px;border:none;border-radius:var(--shape-full);cursor:pointer;font-weight:600;font-size:12.5px;font-family:var(--font-display);color:#fff;transition:opacity var(--duration-short2) var(--motion-standard)}
+.modalBtn:hover{opacity:.88}
+.modalBtn.cancel{background:var(--color-surface-2);color:var(--color-on-surface)}
+.modalBtn.cancel:hover{background:var(--color-surface-variant)}
+@keyframes modalFade{from{opacity:0}to{opacity:1}}
+
+/* ─── FOCUS VISIBLE ───────────────────────────────────────────────────── */
+:focus-visible{outline:3px solid var(--color-primary);outline-offset:2px;border-radius:var(--shape-small)}
+
+/* ─── SCROLLBARS ESTILO M3 ────────────────────────────────────────────── */
+html{scrollbar-width:thin;scrollbar-color:var(--color-outline) transparent}
+*{scrollbar-width:thin;scrollbar-color:var(--color-outline) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--color-outline);border-radius:var(--shape-full);border:2px solid var(--color-surface-0);background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--color-primary)}
+::-webkit-scrollbar-corner{background:transparent}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width:760px){
+  .tabs-desktop{display:none}
+  .mobile-tab-dropdown{display:block}
+  .top-bar-title .title-full{display:none}
+  .top-bar-title .title-short{display:inline}
+  .top-bar{padding:0 12px;gap:8px}
+  .page-container{padding:14px 12px 16px}
+  .kpi div{min-width:110px;padding:8px 12px}
+  .fab-speeddial{padding-top:12px;margin-bottom:0}
+  th,td{padding:4px 3px;font-size:10px;min-width:28px}
+  th{font-size:9.5px;top:52px}
+}
+@media (max-width:480px){
+  th,td{padding:3px 2px;font-size:9px;min-width:22px}
+  .fab-option{font-size:11.5px;padding:0 14px}
+}
+</style></head>
+<body>
+
+<header class="top-bar" role="banner">
+  <div class="top-bar-title">
+    <div class="md-logo"><span class="ms" aria-hidden="true">directions_car</span></div>
+    <span class="title-full">Estudio de Tráfico</span>
+    <span class="title-short">Tráfico</span>
+  </div>
+  <div class="top-bar-spacer"></div>
+
+  <!-- Tabs escritorio -->
+  <nav class="tabs-desktop" role="tablist" aria-label="Secciones del estudio">
+    <button class="tabbtn active" data-t="datos" role="tab" aria-selected="true">Datos</button>
+    <button class="tabbtn" data-t="estaciones" role="tab" aria-selected="false">Estaciones</button>
+    <button class="tabbtn" data-t="imd" role="tab" aria-selected="false">IMD</button>
+    <button class="tabbtn" data-t="resumen" role="tab" aria-selected="false">Resumen por Estación</button>
+    <button class="tabbtn" data-t="global" role="tab" aria-selected="false">Resumen Global</button>
+    <button class="tabbtn" data-t="graficos" role="tab" aria-selected="false">Gráficos</button>
+    <button class="tabbtn" data-t="proyeccion" role="tab" aria-selected="false">Proyección de Tráfico</button>
+  </nav>
+
+  <!-- Menú desplegable móvil -->
+  <div class="mobile-tab-dropdown">
+    <button class="mobile-tab-btn" id="mobile-tab-btn" aria-haspopup="listbox" aria-expanded="false">
+      <span id="mobile-tab-label">Datos de Estaciones</span>
+      <span class="ms mobile-tab-chevron" aria-hidden="true">expand_more</span>
+    </button>
+    <div class="mobile-menu-surface" id="mobile-menu" role="listbox" aria-label="Seleccionar sección">
+      <button class="mobile-menu-item active" role="option" data-t="datos" aria-selected="true">Datos<span class="ms menu-check" aria-hidden="true">check</span></button>
+      <button class="mobile-menu-item" role="option" data-t="estaciones" aria-selected="false">Estaciones<span class="ms menu-check" aria-hidden="true">check</span></button>
+      <button class="mobile-menu-item" role="option" data-t="imd" aria-selected="false">IMD<span class="ms menu-check" aria-hidden="true">check</span></button>
+      <button class="mobile-menu-item" role="option" data-t="resumen" aria-selected="false">Resumen por Estación<span class="ms menu-check" aria-hidden="true">check</span></button>
+      <button class="mobile-menu-item" role="option" data-t="global" aria-selected="false">Resumen Global<span class="ms menu-check" aria-hidden="true">check</span></button>
+      <button class="mobile-menu-item" role="option" data-t="graficos" aria-selected="false">Gráficos<span class="ms menu-check" aria-hidden="true">check</span></button>
+      <button class="mobile-menu-item" role="option" data-t="proyeccion" aria-selected="false">Proyección de Tráfico<span class="ms menu-check" aria-hidden="true">check</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="page-container">
+
+<section id="tab-datos" class="tabpanel active">
+<div class="wrap"><table id="metaTabla"></table></div>
+<div class="fab-speeddial" id="fabSpeeddial">
+<span id="datosMsg"></span>
+<div class="fab-options">
+<button type="button" id="btnExportar" class="fab-option"><span class="ms" aria-hidden="true">upload_file</span><span class="label">Exportar datos</span></button>
+<button type="button" id="btnImportar" class="fab-option"><span class="ms" aria-hidden="true">download</span><span class="label">Importar datos</span></button>
+</div>
+<button type="button" class="fab-main" id="fabMainBtn" aria-haspopup="true" aria-expanded="false" aria-label="Opciones de datos">
+<span class="ms fab-icon-open" aria-hidden="true">storage</span>
+<span class="ms fab-icon-close" aria-hidden="true">close</span>
+</button>
+</div>
+<input type="file" id="importFile" accept=".json,application/json" style="display:none">
+</section>
+
+<section id="tab-estaciones" class="tabpanel">
+<div class="bar">
+Estación: <select id="est"></select>
+Día: <select id="dia"></select>
+<span id="diaFecha" style="color:#555"></span>
+Intervalo: <select id="intv">
+<option value="15">15 min</option><option value="30">30 min</option>
+<option value="60">1 hora</option><option value="120">2 horas</option>
+<option value="240">4 horas</option></select>
+<span id="modo" style="font-weight:bold"></span>
+<span id="qaBadge"></span>
+</div>
+<div id="estRef" class="nota" style="background:#eef4ff;border-left-color:#3b6fb0"></div>
+<div class="wrap"><table id="tbl"></table></div>
+</section>
+
+<section id="tab-imd" class="tabpanel">
+<div class="bar">
+Estación: <select id="imdEst"></select>
+Sentido: <select id="imdVista"><option value="ambos">Ambos (E+S)</option><option value="es">Entrada y Salida</option></select>
+<span id="imdMeta" style="color:#555"></span>
+</div>
+<div class="kpi" id="imdKpi"></div>
+<div class="wrap"><table id="imdDetalle"></table></div>
+</section>
+
+<section id="tab-resumen" class="tabpanel">
+<div class="bar">
+Estación: <select id="resEst"></select>
+Sentido: <select id="resVista"><option value="ambos">Ambos (E+S)</option><option value="es">Entrada y Salida</option></select>
+</div>
+<div class="kpi" id="resKpi"></div>
+<div class="wrap"><table id="resComposicion"></table></div>
+<div class="wrap"><table id="resHoraria"></table></div>
+</section>
+
+<section id="tab-global" class="tabpanel">
+<div class="bar">Sentido: <select id="globalVista"><option value="ambos">Ambos (E+S)</option><option value="es">Entrada y Salida</option></select></div>
+<div class="wrap"><table id="globalTabla"></table></div>
+<div class="wrap"><table id="globalPorEstacion"></table></div>
+<div class="wrap"><table id="globalConteo"></table></div>
+<div class="nota">Cuadro resumen por tipo de vehículo y sentido: IMDs (semanal) e IMDa (anual, IMDs × FCE) de cada estación, según el FC vigente en "Datos de Estaciones" para cada una. FCE = FC promedio de las estaciones con peaje asignado (ligero para filas de vehículos ligeros, pesado para pesados).</div>
+<div class="wrap"><table id="globalResumen"></table></div>
+<div class="chartsGrid">
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarEstacion" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>Vehículos Contabilizados por Estación</h4><span class="sub">Conteo total (todo el periodo de conteo) de cada estación</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarEstacion"></canvas></div>
+ </div>
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarEstacionIMDa" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>IMDa por Estación</h4><span class="sub">Índice Medio Diario anual (proyectado con FC) de cada estación</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarEstacionIMDa"></canvas></div>
+ </div>
+</div>
+</section>
+
+<section id="tab-graficos" class="tabpanel">
+<div class="bar">
+Estación: <select id="gEst"></select>
+Indicador: <select id="gInd"><option value="imda">IMDa (anual, proyectado con FC)</option><option value="imds">IMDs (semanal, sin FC)</option></select>
+<span id="gMeta" style="color:#555"></span>
+</div>
+<div class="kpi" id="gKpi"></div>
+<div class="chartsGrid">
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cPie" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>① Composición Vehicular por Tipo</h4><span class="sub">% de participación de cada tipo de vehículo sobre el IMD total</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cPie"></canvas></div>
+ </div>
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarTipo" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>② Clasificación Vehicular IMD</h4><span class="sub">Volumen (IMD) por tipo de vehículo, ordenado de mayor a menor</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarTipo"></canvas></div>
+ </div>
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarDia" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>③ Vehículos por Día</h4><span class="sub">Volumen diario (24h) de la semana de conteo, por Entrada y Salida</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarDia"></canvas></div>
+ </div>
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cLineHora" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>④ Curva Horaria de Tránsito (Variación Diaria)</h4><span class="sub">Perfil promedio semanal (24h) — identifica la Hora de Máxima Demanda (HMD)</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cLineHora"></canvas></div>
+ </div>
+ <div class="chartCard full">
+  <button class="copyBtn" data-copy="cBarLP" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>⑤ Ligeros vs. Pesados por Día</h4><span class="sub">Evolución de la composición vehicular (%) día a día — útil para detectar patrones de tráfico de carga</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarLP"></canvas></div>
+ </div>
+</div>
+</section>
+
+<section id="tab-proyeccion" class="tabpanel">
+<div class="bar">
+Estación: <select id="proyEst"></select>
+Mostrar años cada: <select id="proyPaso"><option value="1">1 año</option><option value="2">2 años</option><option value="5" selected>5 años</option><option value="10">10 años</option></select>
+<span id="proyMeta" style="color:#555"></span>
+</div>
+<div class="wrap"><table id="proyTabla"></table></div>
+<div class="nota">Proyección por tipo de vehículo (Tráfico Normal + Generado) para los mismos años del cuadro anterior.</div>
+<div class="wrap"><table id="proyTablaTipo"></table></div>
+</section>
+
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   HEADER RESPONSIVE — menú desplegable móvil (M3 Expressive)
+   Sincroniza con los .tabbtn existentes sin alterar su lógica original.
+   ══════════════════════════════════════════════════════════════════════ */
+(function(){
+  const mobileBtn  = document.getElementById('mobile-tab-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileLbl  = document.getElementById('mobile-tab-label');
+
+  function toggleMobileMenu(force){
+    const open = force !== undefined ? force : !mobileMenu.classList.contains('open');
+    mobileMenu.classList.toggle('open', open);
+    mobileBtn.classList.toggle('open', open);
+    mobileBtn.setAttribute('aria-expanded', String(open));
+  }
+
+  mobileBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleMobileMenu(); });
+  document.addEventListener('click', ()=>toggleMobileMenu(false));
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') toggleMobileMenu(false); });
+
+  function syncMobileMenu(t){
+    mobileLbl.textContent = document.querySelector('.tabbtn[data-t="'+t+'"]').textContent;
+    document.querySelectorAll('.mobile-menu-item').forEach(item=>{
+      const active = item.dataset.t === t;
+      item.classList.toggle('active', active);
+      item.setAttribute('aria-selected', String(active));
+    });
+  }
+
+  // Los ítems del menú móvil delegan el cambio de pestaña al botón real
+  // (.tabbtn), que ya tiene toda la lógica de render adjunta.
+  document.querySelectorAll('.mobile-menu-item').forEach(item=>{
+    item.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const t = item.dataset.t;
+      document.querySelector('.tabbtn[data-t="'+t+'"]').click();
+      syncMobileMenu(t);
+      toggleMobileMenu(false);
+    });
+  });
+
+  // Mantiene sincronizado el menú móvil también cuando se usan las tabs de escritorio
+  document.querySelectorAll('.tabbtn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      document.querySelectorAll('.tabbtn').forEach(x=>x.setAttribute('aria-selected','false'));
+      b.setAttribute('aria-selected','true');
+      syncMobileMenu(b.dataset.t);
+    });
+  });
+
+  /* ── FAB speed-dial (Datos: Exportar / Cargar) ──────────────────────── */
+  const fabDial = document.getElementById('fabSpeeddial');
+  const fabMain = document.getElementById('fabMainBtn');
+  if(fabDial && fabMain){
+    function toggleFab(force){
+      const open = force !== undefined ? force : !fabDial.classList.contains('open');
+      fabDial.classList.toggle('open', open);
+      fabMain.setAttribute('aria-expanded', String(open));
+    }
+    fabMain.addEventListener('click', (e)=>{ e.stopPropagation(); toggleFab(); });
+    document.addEventListener('click', (e)=>{ if(!fabDial.contains(e.target)) toggleFab(false); });
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') toggleFab(false); });
+    // Al elegir una opción, se cierra el speed-dial (la acción ya quedó disparada por su propio listener)
+    document.querySelectorAll('.fab-option').forEach(opt=>{
+      opt.addEventListener('click', ()=> setTimeout(()=>toggleFab(false), 120));
+    });
+  }
+})();
+</script>
+
+<script>
+const VT=["Auto","Station Wagon","Camioneta Pick Up","Camioneta Panel","Camioneta Rural Combi","Micro","Bus 2E","Bus 3E","Bus 4E","Camión 2E","Camión 3E","Camión 4E","Semi Trayler 2S1/2S2","Semi Trayler 2S3","Semi Trayler 3S1/3S2","Semi Trayler 3S3","Trayler 2T2","Trayler 2T3","Trayler 3T2","Trayler 3T3"];
+const LIG_IDX=[0,1,2,3,4,5],PES_IDX=[6,7,8,9,10,11,12,13,14,15,16,17,18,19];
+const ESTACIONES=["Estación 1"]; // por defecto solo 1 estación; se pueden añadir más desde "Datos de Estaciones"
+const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const PEAJES_FC={"AGUAS CALIENTES": {"lig": [0.9362, 0.8626, 1.085, 1.0925, 1.1626, 1.1758, 0.9508, 0.8846, 0.9455, 1.0418, 1.0414, 0.9899], "pes": [1.022, 0.9808, 1.0324, 1.0653, 1.0697, 1.1028, 0.9678, 0.9555, 0.9682, 0.953, 0.9599, 1.0098]}, "AGUAS CLARAS": {"lig": [1.002, 1.0567, 1.1036, 1.0592, 1.0095, 1.003, 0.8943, 0.9075, 1.0128, 1.0209, 1.0749, 0.9283], "pes": [1.0412, 1.0049, 1.0248, 1.0107, 0.9905, 0.9823, 0.9917, 0.9523, 0.9768, 1.007, 1.008, 1.0344]}, "AMBO": {"lig": [0.978, 1.0546, 1.1877, 1.277, 1.0179, 1.0278, 0.9661, 0.9541, 1.0045, 0.9693, 0.9846, 0.8615], "pes": [1.0087, 0.9707, 1.1288, 1.2086, 1.0139, 1.0238, 1.0268, 1.0086, 0.9899, 0.9453, 0.9401, 0.9497]}, "ATICO": {"lig": [0.8554, 0.7148, 1.036, 1.0139, 1.1484, 1.1781, 0.9965, 0.9877, 1.1394, 1.0734, 1.1453, 0.8831], "pes": [1.0337, 0.9914, 1.0298, 1.041, 1.0342, 1.0302, 1.0277, 0.9851, 1.0265, 0.9618, 0.9271, 0.944]}, "AYAVIRI": {"lig": [0.9722, 0.9244, 1.0735, 1.0773, 1.1098, 1.1035, 0.9469, 0.9272, 0.9376, 1.0491, 1.0215, 0.9603], "pes": [1.0167, 1.0038, 1.0708, 1.0573, 1.0486, 1.0366, 0.9665, 0.9524, 0.9501, 0.9638, 0.9601, 1.0007]}, "CAMANA": {"lig": [0.5958, 0.4991, 1.0434, 1.2433, 1.3825, 1.4071, 1.2562, 1.22, 1.3018, 1.2559, 1.2199, 0.9724], "pes": [0.9513, 0.8973, 1.0392, 1.0648, 1.0702, 1.0905, 1.1087, 0.9914, 0.9997, 0.9905, 0.9708, 0.9624]}, "CANCAS": {"lig": [0.8619, 0.8638, 1.0755, 1.1156, 1.1769, 1.2257, 0.9733, 0.904, 1.0565, 1.0323, 1.0284, 0.8897], "pes": [1.0323, 0.9825, 1.04, 1.0412, 1.0604, 1.0476, 1.0117, 0.9795, 1.0006, 0.955, 0.9461, 0.9491]}, "CARACOTO": {"lig": [1.0517, 0.9815, 1.0978, 1.0548, 1.054, 1.0469, 0.9914, 0.8786, 0.9962, 0.992, 0.9977, 0.8907], "pes": [1.0343, 1.0013, 1.0777, 1.0346, 1.0568, 1.0441, 0.9898, 0.9297, 0.9572, 0.9481, 1.0071, 0.9547]}, "CASARACRA": {"lig": [1.1057, 1.1747, 1.2363, 1.0139, 0.9312, 1.0287, 0.8415, 0.8825, 1.0603, 0.993, 1.125, 0.9775], "pes": [1.0936, 1.067, 1.1094, 0.9826, 0.9904, 0.99, 0.9969, 0.97, 0.976, 0.9548, 1.0373, 1.0652]}, "CATAC": {"lig": [1.0956, 1.0575, 1.3545, 1.0628, 1.0762, 1.0767, 0.822, 0.8684, 0.9595, 0.9494, 1.1134, 0.9559], "pes": [1.0441, 1.0678, 1.1999, 1.0772, 1.1736, 0.9553, 0.9446, 0.9253, 0.9566, 0.9547, 0.981, 0.9634]}, "CCASACANCHA": {"lig": [1.0047, 1.0408, 1.0824, 1.0548, 1.0802, 1.0837, 0.9767, 0.9426, 0.9081, 0.9961, 0.9756, 0.9254], "pes": [1.0968, 1.0852, 1.0957, 1.0809, 1.0239, 0.9967, 0.9386, 0.9525, 0.9555, 0.956, 0.9332, 0.9566]}, "CHACAPAMPA": {"lig": [1.0446, 0.9661, 0.9178, 1.0174, 1.0405, 1.1257, 0.955, 0.9888, 1.0378, 1.0111, 1.1305, 1.0215], "pes": [1.1031, 0.9998, 0.9655, 0.9941, 1.0102, 1.0186, 1.0155, 1.0051, 0.9767, 0.9556, 0.9706, 1.0601]}, "CHALHUAPUQUIO": {"lig": [1.1671, 1.2012, 1.1909, 1.0566, 1.0146, 1.0442, 0.7925, 0.8346, 1.0198, 0.9725, 1.0259, 0.9319], "pes": [1.068, 1.0692, 1.0807, 1.0683, 1.0507, 0.9933, 0.9468, 0.9321, 0.9565, 0.9463, 0.9497, 0.9939]}, "CHICAMA": {"lig": [0.9671, 0.9414, 1.113, 1.0394, 1.0773, 1.0585, 0.9554, 1.008, 1.0731, 1.042, 1.052, 0.8249], "pes": [0.9909, 0.9874, 1.0928, 1.0708, 1.0543, 1.0573, 1.0423, 0.9933, 1.0013, 0.9946, 0.951, 0.8799]}, "CHILCA": {"lig": [0.6163, 0.5814, 0.789, 1.0577, 1.5273, 1.5796, 1.2842, 1.4015, 1.4833, 1.2554, 1.1876, 0.74], "pes": [0.9571, 0.9724, 1.0203, 1.0381, 1.0583, 1.0539, 1.0372, 0.9948, 0.9992, 0.988, 0.9652, 0.9396]}, "CHULLQUI": {"lig": [1.0428, 1.0728, 1.0509, 1.0163, 1.05, 0.9407, 0.9832, 0.9316, 0.9915, 0.9207, 1.2832, 0.8829], "pes": [0.9571, 0.9658, 1.0534, 1.0776, 1.0809, 1.0402, 1.0171, 0.9865, 0.9731, 0.9169, 1.24, 0.9257]}, "CHULUCANAS": {"lig": [1.0135, 1.0695, 1.1798, 1.1501, 1.0679, 1.0398, 0.9751, 0.9127, 0.9779, 0.9474, 0.9119, 0.8682], "pes": [0.9884, 0.9682, 1.1388, 1.1641, 1.0933, 1.0508, 1.0256, 0.9679, 0.9628, 0.9205, 0.8943, 0.922]}, "CIUDAD DE DIOS": {"lig": [1.4832, 0.9071, 1.1711, 1.0698, 1.0027, 1.0245, 0.9031, 0.9123, 1.0735, 1.0006, 1.2021, 0.8987], "pes": [1.4397, 0.9383, 1.1026, 0.9966, 0.9637, 1.0342, 1.0428, 1.0261, 1.0414, 0.9841, 0.993, 0.9649]}, "CORCONA": {"lig": [1.1024, 1.1641, 1.3033, 1.0335, 0.9767, 1.0411, 0.7767, 0.8755, 1.0142, 1.0035, 1.1663, 1.0001], "pes": [1.0985, 1.0709, 1.1124, 0.9593, 0.9674, 0.984, 0.9816, 0.9627, 0.9804, 0.9767, 1.0641, 1.0861]}, "CRUCE BAYOVAR": {"lig": [0.8734, 0.8855, 1.1136, 1.1087, 1.147, 1.1828, 0.8641, 0.9783, 1.1469, 1.0024, 1.0777, 0.7715], "pes": [0.9845, 0.9606, 1.0584, 1.0655, 1.0311, 1.0361, 1.0157, 0.9821, 1.0167, 0.9774, 0.9231, 0.9028]}, "CUCULI": {"lig": [0.9948, 1.0346, 1.1594, 1.118, 1.1059, 0.9573, 0.9652, 0.9185, 0.9475, 0.9719, 0.9647, 0.9955], "pes": [0.9424, 1.0419, 1.2043, 1.156, 1.0848, 0.9783, 0.9812, 0.9398, 0.9207, 0.9302, 0.9384, 1.0749]}, "DESVIO OLMOS": {"lig": [0.9497, 1.0057, 1.1672, 1.1939, 1.1494, 1.096, 0.9411, 0.8681, 0.9965, 0.9618, 1.0119, 0.8222], "pes": [1.047, 1.0401, 1.0986, 1.0775, 1.0393, 1.0176, 0.9898, 0.9217, 0.9405, 0.9579, 0.95, 0.9817]}, "DESVIO TALARA": {"lig": [0.8705, 0.8863, 1.1244, 1.084, 1.1438, 1.1754, 0.9963, 0.9874, 1.1057, 1.0288, 1.0309, 0.8166], "pes": [1.0063, 0.9722, 1.0418, 1.0405, 1.0343, 1.0196, 1.0721, 0.9782, 0.9984, 0.9792, 0.9631, 0.9516]}, "EL FISCAL": {"lig": [0.9109, 0.8549, 1.0606, 1.0601, 1.0691, 1.126, 0.9958, 0.9853, 1.075, 1.0662, 1.0647, 0.9479], "pes": [0.9889, 0.9326, 1.0201, 1.0355, 1.0216, 1.0855, 1.0665, 1.0209, 1.015, 0.9799, 0.9618, 0.9819]}, "EL PARAISO": {"lig": [0.9135, 0.8984, 1.0432, 0.9974, 1.1183, 1.153, 0.9141, 0.9811, 1.0964, 1.0384, 1.0935, 0.8747], "pes": [1.0084, 0.986, 1.0607, 1.0471, 1.025, 1.0153, 1.0105, 0.9788, 0.9973, 0.9801, 0.9625, 0.9429]}, "FORTALEZA": {"lig": [0.8869, 0.8317, 1.0074, 1.0227, 1.1568, 1.1965, 0.8986, 1.0119, 1.1837, 1.1022, 1.1702, 0.7936], "pes": [0.9938, 0.956, 1.0154, 1.0346, 1.0384, 1.3018, 1.0249, 0.9743, 0.9948, 0.9789, 0.9539, 0.9356]}, "HUACRAPUQUIO": {"lig": [1.1193, 1.157, 1.0649, 1.0486, 1.1504, 0.9951, 0.8705, 0.9487, 0.9945, 0.971, 1.1529, 0.827], "pes": [1.085, 1.1264, 1.0529, 1.0465, 1.1603, 1.0254, 0.9226, 0.9778, 0.9218, 0.9085, 1.1194, 0.9334]}, "HUARMEY": {"lig": [0.8816, 0.9056, 1.112, 1.1249, 1.2557, 1.2048, 0.879, 0.9703, 1.1483, 1.0831, 1.1634, 0.7903], "pes": [1.0456, 1.0252, 1.1132, 1.1416, 1.1272, 1.0303, 0.9991, 0.9554, 0.9757, 0.9617, 0.9397, 0.9169]}, "HUATAYA": {"lig": [2.3609, 0.96, 0.8747, 0.8705, 0.7536, 0.7578, 0.7931, 0.8788, 0.8353, 1.0, 1.0, 1.0], "pes": [5.1132, 1.3415, 1.0567, 1.1183, 0.7106, 0.773, 0.7399, 0.8727, 0.9802, 1.0, 1.0, 1.0]}, "ICA": {"lig": [0.931, 0.8181, 1.0513, 1.0461, 1.1642, 1.1857, 0.9741, 1.0246, 1.0994, 1.0312, 1.1911, 1.0337], "pes": [0.9911, 0.9493, 1.044, 1.0283, 1.067, 1.0747, 1.0593, 0.9907, 0.9632, 0.9523, 1.0104, 1.0032]}, "ILAVE": {"lig": [1.0111, 0.9584, 1.036, 1.0136, 1.1067, 1.1613, 0.97, 0.7834, 1.0335, 1.0501, 1.1248, 0.9861], "pes": [1.0136, 0.947, 0.9822, 5.5822, 1.0245, 1.0346, 1.0466, 0.8667, 1.0477, 1.0417, 1.0885, 1.0638]}, "ILO": {"lig": [0.8275, 0.8217, 1.0112, 1.0814, 1.0777, 1.122, 1.0989, 1.0557, 0.9854, 1.0498, 1.0303, 0.963], "pes": [1.0476, 1.0169, 1.059, 0.9766, 0.9992, 1.042, 1.0373, 1.0284, 0.9669, 0.9802, 0.9728, 0.9625]}, "JAHUAY - CHINCHA": {"lig": [0.8291, 0.8936, 1.017, 0.9967, 1.1373, 1.1918, 0.9486, 1.0137, 1.1321, 1.034, 1.0634, 0.9289], "pes": [0.9858, 1.0162, 1.0441, 1.0554, 1.0544, 1.048, 1.0262, 0.9755, 0.9777, 0.9697, 0.9511, 0.9478]}, "LOMA LARGA BAJA": {"lig": [1.0231, 1.2771, 1.3671, 1.2848, 1.1408, 1.0369, 0.8267, 0.9064, 0.9247, 0.8925, 0.8826, 0.8752], "pes": [0.9981, 1.1016, 1.1995, 1.2276, 1.1103, 1.0823, 0.9596, 0.9761, 0.9483, 0.9331, 0.8987, 0.8944]}, "LUNAHUANA": {"lig": [1.0119, 1.0303, 1.0475, 0.9587, 1.0163, 1.1317, 0.8233, 0.9366, 1.0988, 0.9949, 1.078, 1.0638], "pes": [1.1095, 1.0967, 1.0541, 1.043, 0.9971, 1.0739, 1.0009, 0.9482, 0.9827, 0.9329, 0.9403, 0.9907]}, "MACUSANI": {"lig": [1.0465, 0.999, 1.0338, 1.0944, 1.0979, 1.1081, 0.9926, 0.9493, 1.0253, 0.9652, 1.0158, 0.8879], "pes": [1.0895, 1.0802, 1.0669, 1.0219, 1.0756, 1.0209, 1.1741, 0.9353, 0.9179, 0.9386, 0.939, 0.9983]}, "MARCONA": {"lig": [0.9525, 0.9039, 0.9952, 1.0106, 1.0911, 1.0595, 1.0346, 1.0232, 1.0372, 1.029, 0.9989, 0.9111], "pes": [1.043, 1.0013, 0.9583, 1.0297, 1.1134, 1.0444, 1.048, 1.0472, 1.026, 0.9629, 0.9465, 0.932]}, "MATARANI": {"lig": [0.481, 0.3998, 0.9717, 1.5343, 1.7023, 1.6718, 1.6092, 1.5584, 1.5827, 1.4257, 1.2888, 0.9119], "pes": [0.9673, 0.8698, 1.0297, 1.0802, 1.0657, 1.0279, 1.0254, 1.0446, 0.9864, 0.995, 0.9822, 0.9819]}, "MENOCUCHO": {"lig": [1.085, 0.9812, 1.05, 1.0811, 1.0266, 1.0713, 0.9585, 0.9192, 1.0498, 1.0467, 1.0452, 0.8579], "pes": [1.0933, 1.0653, 1.1421, 1.0364, 0.9913, 0.9622, 0.9505, 0.9625, 0.9785, 0.9841, 0.9862, 1.0148]}, "MOCCE": {"lig": [1.0115, 0.9769, 1.0613, 1.065, 1.0408, 0.9962, 0.9898, 0.9054, 1.0213, 1.0118, 1.0012, 0.9247], "pes": [0.951, 0.9816, 1.077, 1.1377, 1.0767, 0.9655, 1.0381, 0.985, 0.995, 0.9641, 0.9558, 0.9435]}, "MONTALVO": {"lig": [0.9256, 0.8896, 1.0507, 1.0351, 1.0336, 1.1014, 1.0261, 0.9905, 1.0447, 1.0608, 1.0346, 0.9658], "pes": [0.9754, 0.9558, 1.0155, 1.0254, 1.0095, 1.0844, 1.0785, 1.0275, 1.0167, 0.9888, 0.9674, 0.98]}, "MORROPE": {"lig": [0.9291, 0.918, 1.2042, 1.114, 1.1254, 1.1566, 0.8933, 0.9593, 1.0807, 0.9811, 1.0512, 0.8016], "pes": [0.9854, 0.9645, 1.077, 1.0663, 1.0358, 1.0336, 1.0257, 1.0003, 1.0155, 0.9853, 0.9451, 0.9179]}, "MOYOBAMBA": {"lig": [1.0172, 0.9993, 1.0281, 1.0219, 0.991, 0.9724, 0.9456, 0.9603, 1.0486, 1.0817, 1.1373, 1.08], "pes": [1.0123, 0.9812, 1.012, 1.0299, 1.0077, 0.9903, 1.0012, 0.9653, 0.9861, 1.0086, 1.0129, 1.0379]}, "NAZCA": {"lig": [0.969, 0.9023, 1.0494, 1.0595, 1.0762, 1.0902, 0.9243, 0.9306, 1.0245, 1.016, 1.0671, 0.9918], "pes": [1.0562, 1.0098, 1.0329, 1.0328, 1.0325, 1.0269, 1.0128, 0.9732, 0.9609, 0.9602, 0.9275, 1.0491]}, "PACANGUILLA": {"lig": [0.9539, 0.9606, 1.1189, 1.117, 1.142, 1.1808, 0.9622, 0.9834, 1.0937, 0.9832, 0.9979, 0.7654], "pes": [1.006, 0.9822, 1.0858, 1.0969, 1.0766, 1.0798, 1.0941, 1.0166, 0.9911, 0.9429, 0.9142, 0.8905]}, "PACRA": {"lig": [1.0091, 0.957, 1.0209, 0.9881, 1.2122, 1.0758, 0.8772, 0.9346, 1.0435, 1.0345, 1.0857, 0.9795], "pes": [1.0832, 1.01, 1.0286, 1.0364, 1.1083, 1.0029, 0.9686, 0.9412, 0.9706, 0.952, 0.9859, 0.996]}, "PAITA": {"lig": [0.8362, 0.855, 0.96, 1.1002, 1.1329, 1.1228, 1.0946, 1.0862, 1.0113, 1.0572, 1.0343, 0.8543], "pes": [1.0637, 0.9986, 1.0332, 1.1742, 1.1086, 1.0719, 1.1384, 1.0669, 0.9588, 0.9185, 0.8559, 0.9255]}, "PAMPA CUELLAR": {"lig": [1.0268, 0.8142, 1.0724, 1.0806, 1.1616, 1.1803, 0.9567, 0.7957, 1.0641, 1.038, 1.0557, 0.9772], "pes": [1.1081, 1.077, 1.0639, 1.0083, 1.1112, 1.0845, 0.9918, 0.9561, 0.9589, 0.8916, 0.9121, 0.9504]}, "PAMPA GALERA": {"lig": [0.964, 1.0087, 1.1311, 1.1214, 1.0518, 1.0972, 0.819, 0.7818, 1.0505, 1.076, 1.1323, 0.9586], "pes": [1.1056, 1.0973, 1.0952, 1.0658, 1.0378, 1.0205, 0.9472, 0.9311, 0.955, 0.9441, 0.936, 0.9479]}, "PAMPAMARCA": {"lig": [0.9412, 0.9552, 1.0962, 1.0681, 1.1301, 1.1134, 0.8653, 0.8837, 1.0188, 1.0975, 1.1159, 0.983], "pes": [1.0833, 1.0608, 1.08, 1.0714, 1.064, 1.0321, 0.9519, 0.9426, 0.9317, 0.9501, 0.9398, 0.9688]}, "PATAHUASI": {"lig": [1.0505, 0.9287, 1.146, 1.0872, 1.1086, 1.128, 0.9169, 0.801, 1.0421, 0.9869, 1.0075, 0.9579], "pes": [1.0668, 1.0418, 1.0805, 1.0643, 1.0616, 1.0569, 1.0065, 0.944, 0.9475, 0.9036, 0.9309, 0.9274]}, "PEDRO RUIZ": {"lig": [0.9661, 1.0279, 1.1022, 1.1233, 1.1127, 1.0515, 0.9396, 0.9041, 0.97, 0.9832, 1.013, 0.889], "pes": [1.0361, 1.0163, 1.0483, 1.0529, 1.0166, 0.9901, 0.99, 0.9413, 0.961, 0.9787, 0.9826, 1.0212]}, "PICHIRHUA": {"lig": [1.0465, 1.0891, 1.1333, 1.0561, 1.0383, 1.0173, 0.9081, 0.884, 0.9812, 0.9968, 1.0126, 0.9151], "pes": [1.0936, 1.0887, 1.1081, 1.0925, 1.0545, 1.0256, 0.946, 0.9321, 0.9383, 0.946, 0.9298, 0.9399]}, "PIURA SULLANA": {"lig": [1.0607, 1.054, 1.1688, 1.0898, 1.0558, 1.0528, 0.9697, 0.9539, 1.0019, 0.964, 0.9557, 0.8684], "pes": [1.0571, 1.0402, 1.1277, 1.0518, 1.0405, 1.0119, 1.0179, 0.9763, 0.995, 0.9755, 0.9427, 0.9189]}, "PLANCHON": {"lig": [1.0327, 1.0756, 1.0641, 1.0613, 1.0628, 1.0224, 0.9361, 0.9131, 0.9554, 0.968, 1.0417, 0.9385], "pes": [1.3722, 1.2585, 1.1075, 1.17, 1.0496, 1.0154, 0.9275, 0.8807, 0.8567, 0.8959, 0.9614, 1.0233]}, "POMAHUACA": {"lig": [0.9587, 0.9933, 1.1653, 1.2213, 1.1511, 1.0886, 0.9287, 0.8481, 1.0002, 0.9934, 1.0133, 0.8296], "pes": [1.0674, 1.0301, 1.1158, 1.1109, 1.0645, 1.0235, 0.9882, 0.9203, 0.9522, 0.937, 0.9332, 0.9668]}, "PONGO": {"lig": [1.0265, 1.0591, 1.056, 1.0787, 1.0546, 1.0025, 1.075, 0.9103, 0.9692, 0.9654, 0.9778, 0.9308], "pes": [1.1145, 1.0702, 1.0868, 1.0354, 0.9963, 0.9774, 1.0443, 0.902, 0.9205, 0.968, 0.9712, 1.0669]}, "POZO REDONDO": {"lig": [0.8942, 0.824, 1.0133, 1.0783, 1.1178, 1.0895, 1.0494, 1.0438, 1.1167, 1.0579, 1.0216, 0.848], "pes": [1.0157, 0.9826, 1.0195, 1.0517, 1.0534, 1.0459, 1.014, 0.9923, 1.0345, 1.0012, 0.9435, 0.8997]}, "PUNTA PERDIDA": {"lig": [0.9544, 0.7922, 1.098, 1.1995, 1.4001, 1.4069, 0.8238, 0.6031, 1.1767, 1.0628, 1.2693, 1.1014], "pes": [1.118, 1.1218, 1.0774, 1.0165, 1.2427, 1.1333, 1.012, 0.937, 0.9279, 0.8749, 0.9204, 0.949]}, "QUIULLA": {"lig": [1.0974, 1.1408, 1.2315, 1.0452, 1.0212, 1.0679, 0.814, 0.8685, 1.0002, 1.0063, 1.1046, 0.9381], "pes": [1.1367, 1.081, 1.0874, 0.9355, 0.9314, 0.9736, 0.9528, 0.9488, 0.9841, 1.0038, 1.1007, 1.1109]}, "RUMICHACA": {"lig": [1.0577, 0.9112, 0.9934, 0.9745, 1.2193, 1.2055, 0.8748, 0.8955, 1.0297, 1.0766, 1.1671, 0.9701], "pes": [1.0807, 1.0122, 1.0302, 1.0888, 1.0366, 1.0099, 0.969, 0.9188, 0.9654, 0.9569, 1.0013, 0.9972]}, "SAN ANTON": {"lig": [1.0691, 1.0523, 1.0689, 1.1318, 1.0035, 1.085, 1.0541, 1.0138, 0.9978, 0.9206, 0.9981, 0.8467], "pes": [1.1667, 1.0854, 1.0365, 1.0303, 1.0316, 1.0426, 1.0281, 0.9802, 0.9333, 0.9279, 0.989, 0.9485]}, "SAN GABAN": {"lig": [1.0594, 1.0125, 1.0893, 1.1043, 1.1321, 1.0921, 0.9727, 0.8972, 0.9272, 0.9528, 0.9512, 0.9451], "pes": [1.1273, 1.0635, 1.1206, 1.084, 1.1029, 1.074, 1.1605, 0.8976, 0.8572, 0.908, 0.9421, 1.0128]}, "SAN LORENZO": {"lig": [1.0839, 1.1914, 1.1227, 1.2647, 1.0266, 1.0376, 0.8703, 0.9258, 0.9436, 0.961, 1.0442, 0.927], "pes": [1.6588, 1.5639, 1.3338, 1.4442, 1.0532, 1.035, 0.9249, 0.9112, 0.8771, 0.8164, 0.8616, 0.9665]}, "SANTA LUCIA": {"lig": [1.0087, 0.8363, 1.1211, 1.1106, 1.1184, 1.1768, 0.956, 0.7674, 1.0724, 1.0214, 1.0523, 0.9795], "pes": [1.0356, 1.0069, 1.0716, 1.0685, 1.0621, 1.0856, 1.0229, 0.9381, 0.9411, 0.9138, 0.9453, 0.9392]}, "SAYLLA": {"lig": [1.0222, 0.9785, 1.1062, 1.0858, 1.0613, 1.0638, 0.9806, 0.9142, 0.9238, 0.9909, 0.9947, 0.9411], "pes": [1.0693, 1.0277, 1.0743, 1.061, 1.0379, 1.0317, 0.9662, 0.9474, 0.9472, 0.9579, 0.947, 0.9774]}, "SERPENTIN DE PASAMAYO": {"lig": [1.0535, 1.0503, 1.0886, 1.0814, 1.0647, 1.0464, 0.9694, 0.854, 1.0238, 1.045, 1.0263, 1.0654], "pes": [0.994, 1.0077, 1.0623, 1.0455, 1.0254, 1.0171, 1.0086, 0.9839, 0.9921, 0.9743, 0.9582, 0.9488]}, "SICUYANI": {"lig": [1.0297, 0.8278, 1.0261, 1.0976, 1.1347, 1.1691, 0.9155, 0.774, 1.0939, 1.0466, 1.1455, 1.0126], "pes": [1.1244, 1.0164, 1.0598, 1.0657, 1.0985, 1.1286, 1.0861, 0.9971, 0.991, 0.9077, 0.9308, 0.9614]}, "SOCOS": {"lig": [1.1903, 0.9863, 0.982, 0.9188, 1.094, 1.0772, 0.934, 0.9544, 1.0099, 1.0057, 1.0421, 0.9406], "pes": [1.1347, 1.0494, 1.0018, 1.2878, 1.0911, 1.0528, 1.0231, 0.9946, 1.0306, 1.0022, 1.0652, 0.901]}, "TAMBOGRANDE": {"lig": [0.9297, 0.9679, 1.0638, 1.103, 1.2229, 1.0587, 1.0396, 1.0332, 1.0144, 0.8993, 0.9585, 0.8799], "pes": [0.6024, 0.75, 1.1342, 1.4458, 1.5102, 1.2766, 1.3328, 1.3204, 1.2091, 1.0369, 0.9407, 0.7071]}, "TOMASIRI": {"lig": [0.9972, 0.9232, 1.0516, 1.0804, 1.1, 1.0942, 1.0293, 0.99, 0.8973, 1.0404, 1.0386, 0.9031], "pes": [0.9789, 0.9106, 0.9995, 1.0539, 1.0515, 1.0702, 1.058, 1.0075, 0.9691, 1.0064, 1.0067, 0.9966]}, "TUNAN": {"lig": [1.0761, 1.0516, 1.0703, 1.023, 1.1174, 1.0413, 0.8626, 0.8554, 0.9819, 0.9733, 1.1132, 0.9816], "pes": [1.0648, 1.0578, 1.0849, 1.0647, 1.0341, 0.9359, 0.9355, 0.9285, 0.9763, 0.9641, 1.0216, 1.0031]}, "UNION PROGRESO": {"lig": [1.0256, 1.0263, 1.0728, 1.0366, 1.0256, 1.0113, 0.9544, 0.9355, 0.9696, 1.0061, 1.1122, 0.9406], "pes": [1.1522, 1.1289, 1.0613, 1.0342, 0.9994, 0.9916, 0.9577, 0.9143, 0.9085, 0.9675, 1.0861, 0.995]}, "UTCUBAMBA": {"lig": [1.1969, 1.0343, 1.0957, 1.1113, 1.0756, 1.0478, 0.9556, 0.9124, 0.9571, 0.9881, 0.9318, 0.8952], "pes": [1.1577, 1.0364, 1.0667, 1.0631, 1.024, 0.9908, 0.9829, 0.9364, 0.9605, 0.9802, 0.9216, 1.0143]}, "VARIANTE DE PASAMAYO": {"lig": [0.9444, 0.9203, 1.0337, 1.0118, 1.0802, 1.1121, 0.9392, 0.9927, 1.074, 1.0049, 1.0472, 0.9053], "pes": [1.1672, 0.9188, 1.016, 1.0768, 0.9922, 0.9811, 1.013, 0.9895, 1.0586, 1.0114, 0.9803, 0.9711]}, "VARIANTE DE UCHUMAYO": {"lig": [0.7411, 0.6766, 1.0218, 1.1452, 1.1929, 1.199, 1.1217, 1.0762, 1.1286, 1.1417, 1.1231, 0.959], "pes": [1.0133, 0.9729, 1.0446, 1.0703, 1.0573, 1.0429, 1.0271, 0.9797, 0.9635, 0.9527, 0.9549, 0.9498]}, "VESIQUE": {"lig": [0.8602, 0.9031, 1.0597, 1.0853, 1.1302, 1.1518, 1.0065, 1.0684, 1.1196, 1.0108, 1.0305, 0.8067], "pes": [1.0255, 0.9896, 1.06, 1.091, 1.0805, 1.0745, 1.0534, 1.0136, 1.03, 0.9408, 0.9231, 0.8962]}, "VIRU": {"lig": [0.9903, 0.964, 1.0774, 1.0604, 1.1153, 1.1221, 0.9573, 1.0148, 1.2094, 0.9743, 0.9961, 0.7989], "pes": [1.0337, 0.9986, 1.0637, 1.0876, 1.0879, 1.0847, 1.0635, 1.0165, 1.126, 0.9199, 0.8931, 0.8927]}, "YAUCA": {"lig": [0.8794, 0.7946, 1.0518, 1.0285, 1.1247, 1.1292, 0.9653, 0.9839, 1.0684, 1.0963, 1.1303, 0.9048], "pes": [1.0331, 0.9871, 1.0294, 1.0337, 1.03, 1.0338, 1.0805, 0.9767, 0.9747, 1.001, 0.9281, 0.9422]}};
+const DEPARTAMENTOS_TASA={"Amazonas": {"pes": 1.12, "lig": 2.69}, "Ancash": {"pes": 2.33, "lig": 1.49}, "Apurímac": {"pes": 1.13, "lig": 4.5}, "Arequipa": {"pes": 2.9, "lig": 2.97}, "Ayacucho": {"pes": 1.83, "lig": 2.9}, "Cajamarca": {"pes": 3.05, "lig": 1.45}, "Cusco": {"pes": 2.77, "lig": 3.07}, "Huancavelica": {"pes": 1.17, "lig": 2.0}, "Huánuco": {"pes": 1.94, "lig": 3.03}, "Ica": {"pes": 1.1, "lig": 2.62}, "Junín": {"pes": 2.04, "lig": 2.84}, "La Libertad": {"pes": 2.61, "lig": 2.21}, "Lambayeque": {"pes": 2.4, "lig": 2.54}, "Lima Provincias": {"pes": 2.61, "lig": 2.34}, "Loreto": {"pes": 0.12, "lig": 1.48}, "Madre de Dios": {"pes": 2.22, "lig": 1.38}, "Moquegua": {"pes": 1.97, "lig": 0.58}, "Pasco": {"pes": 1.72, "lig": 0.39}, "Piura": {"pes": 2.38, "lig": 2.37}, "Puno": {"pes": 2.47, "lig": 2.58}, "San Martín": {"pes": 2.11, "lig": 2.88}, "Tacna": {"pes": 2.13, "lig": 2.36}, "Tumbes": {"pes": 0.81, "lig": 2.4}, "Ucayali": {"pes": 1.73, "lig": 2.25}};
+const BASE=15,SLOTS15=1440/BASE,COLS=VT.length,store={};
+function makeStationMeta(){return {fecha:'',peaje:'',fcLig:1,fcPes:1,fcAuto:true,departamento:'',rLig:3.0,rPes:4.0,rateAuto:true,horizonte:20,pGen:0,fechaAuto:true,peajeAuto:true,deptoAuto:true};}
+const stationMeta=ESTACIONES.map(()=>makeStationMeta());
+function pad(n){return n.toString().padStart(2,'0');}
+// Nombre del día real (Lunes..Domingo) que corresponde a "fecha inicio + d días".
+// Si no hay fecha registrada, cae de vuelta a un rótulo genérico Día 1, Día 2...
+function nombreDiaOffset(fecha,d){
+ if(!fecha)return 'Día '+(d+1);
+ const dt=new Date(fecha+'T00:00:00');dt.setDate(dt.getDate()+d);
+ return DIAS[(dt.getDay()+6)%7];
+}
+function diasDesde(fecha){const a=[];for(let d=0;d<7;d++)a.push(nombreDiaOffset(fecha,d));return a;}
+function getBase(estIdx,dayIdx){const k=estIdx+'_'+dayIdx;if(!store[k]){store[k]=Array.from({length:SLOTS15*2},()=>Array.from({length:COLS},()=>0));}return store[k];}
+function labels(min){const n=1440/min,arr=[];for(let i=0;i<n;i++){let a=i*min,b=(i+1)*min;arr.push(pad(Math.floor(a/60))+':'+pad(a%60)+' - '+pad(Math.floor(b/60))+':'+pad(b%60));}return arr;}
+function aggregate(estIdx,dayIdx,min){
+ const base=getBase(estIdx,dayIdx),group=min/BASE,groups=SLOTS15/group,out=[];
+ for(let g=0;g<groups;g++){
+  const ent=new Array(COLS).fill(0),sal=new Array(COLS).fill(0);
+  for(let s=0;s<group;s++){const slot=g*group+s;for(let c=0;c<COLS;c++){ent[c]+=base[slot*2][c];sal[c]+=base[slot*2+1][c];}}
+  out.push(ent,sal);
+ }
+ return out;
+}
+function dailyTotals(estIdx,dayIdx){const m=getBase(estIdx,dayIdx),t=new Array(COLS).fill(0);m.forEach(r=>r.forEach((v,c)=>t[c]+=v));return t;}
+// Totales diarios (24h) separados por sentido: {ent[], sal[]}
+function dailyTotalsSentido(estIdx,dayIdx){
+ const m=getBase(estIdx,dayIdx),ent=new Array(COLS).fill(0),sal=new Array(COLS).fill(0);
+ m.forEach((row,r)=>{const acc=r%2===0?ent:sal;row.forEach((v,c)=>acc[c]+=v);});
+ return{ent,sal};
+}
+function weeklyIMDs(estIdx){const sums=new Array(COLS).fill(0);for(let d=0;d<7;d++){dailyTotals(estIdx,d).forEach((v,c)=>sums[c]+=v);}return sums.map(s=>s/7);}
+// Suma cruda (sin promediar) de los 7 días del conteo, por tipo de vehículo — para el conteo total real de la estación
+function weekRawByCol(estIdx){const sums=new Array(COLS).fill(0);for(let d=0;d<7;d++){dailyTotals(estIdx,d).forEach((v,c)=>sums[c]+=v);}return sums;}
+// Fecha final del conteo = fecha de inicio + 6 días (conteo de una semana completa)
+function fechaFinConteo(fecha){if(!fecha)return'-';const d=new Date(fecha+'T00:00:00');d.setDate(d.getDate()+6);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+// IMDs separado por sentido (Entrada/Salida), promedio de los 7 días
+function weeklyIMDsSentido(estIdx){
+ const ent=new Array(COLS).fill(0),sal=new Array(COLS).fill(0);
+ for(let d=0;d<7;d++){const t=dailyTotalsSentido(estIdx,d);t.ent.forEach((v,c)=>ent[c]+=v);t.sal.forEach((v,c)=>sal[c]+=v);}
+ return{ent:ent.map(v=>v/7),sal:sal.map(v=>v/7)};
+}
+function classify(arr){let lig=0,pes=0;LIG_IDX.forEach(i=>lig+=arr[i]);PES_IDX.forEach(i=>pes+=arr[i]);return{lig,pes,total:lig+pes};}
+function fmt(n){return n.toLocaleString('es-PE',{maximumFractionDigits:1});}
+function imdaPorTipo(estIdx){const meta=stationMeta[estIdx],imds=weeklyIMDs(estIdx);return imds.map((v,c)=>v*(LIG_IDX.includes(c)?meta.fcLig:meta.fcPes));}
+function aplicaFC(estIdx,arr){const meta=stationMeta[estIdx];return arr.map((v,c)=>v*(LIG_IDX.includes(c)?meta.fcLig:meta.fcPes));}
+// QA Entrada/Salida: dayIdx null => acumula toda la semana
+function qaCheck(estIdx,dayIdx){
+ let e=0,s=0;
+ const days=dayIdx===null?[0,1,2,3,4,5,6]:[dayIdx];
+ days.forEach(d=>{getBase(estIdx,d).forEach((row,r)=>{const sum=row.reduce((a,b)=>a+b,0);if(r%2===0)e+=sum;else s+=sum;});});
+ const diff=(e+s)>0?Math.abs(e-s)/((e+s)/2)*100:0;
+ return{e,s,diff};
+}
+function qaBadgeHtml(diff){const cls=diff<=10?'ok':(diff<=20?'warn':'bad');return '<span class="badge '+cls+'">Δ E/S '+diff.toFixed(1)+'%</span>';}
+// Perfil promedio semanal de 15 min (E+S) para hora punta / FHP a nivel de estación
+function weeklyAvgProfile(estIdx){
+ const profile=new Array(SLOTS15).fill(0);
+ for(let d=0;d<7;d++){const m=getBase(estIdx,d);for(let slot=0;slot<SLOTS15;slot++){const rE=slot*2,rS=slot*2+1;profile[slot]+=m[rE].reduce((a,b)=>a+b,0)+m[rS].reduce((a,b)=>a+b,0);}}
+ return profile.map(v=>v/7);
+}
+// Perfil promedio semanal de 15 min, separado por sentido (Entrada/Salida)
+function weeklyAvgProfileSentido(estIdx){
+ const ent=new Array(SLOTS15).fill(0),sal=new Array(SLOTS15).fill(0);
+ for(let d=0;d<7;d++){const m=getBase(estIdx,d);for(let slot=0;slot<SLOTS15;slot++){ent[slot]+=m[slot*2].reduce((a,b)=>a+b,0);sal[slot]+=m[slot*2+1].reduce((a,b)=>a+b,0);}}
+ return{ent:ent.map(v=>v/7),sal:sal.map(v=>v/7)};
+}
+function peakFromProfile(profile){
+ const hourly=[];for(let h=0;h<24;h++){let v=0;for(let q=0;q<4;q++)v+=profile[h*4+q];hourly.push(v);}
+ let hpIdx=0;for(let h=1;h<24;h++)if(hourly[h]>hourly[hpIdx])hpIdx=h;
+ let v15max=0;for(let q=0;q<4;q++)v15max=Math.max(v15max,profile[hpIdx*4+q]);
+ const fhp=v15max>0?hourly[hpIdx]/(4*v15max):0;
+ return{hpIdx,volHora:hourly[hpIdx],fhp};
+}
+
+// ---- TABS ----
+document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.tabpanel').forEach(x=>x.classList.remove('active'));
+ b.classList.add('active');document.getElementById('tab-'+b.dataset.t).classList.add('active');
+ if(b.dataset.t==='estaciones')render();
+ if(b.dataset.t==='datos')renderMetaTabla();
+ if(b.dataset.t==='imd')renderIMD();
+ if(b.dataset.t==='resumen')renderResumen();
+ if(b.dataset.t==='global')renderGlobal();
+ if(b.dataset.t==='graficos')renderGraficos();
+ if(b.dataset.t==='proyeccion')renderProy();
+}));
+
+// ---- TAB ESTACIONES ----
+const est=document.getElementById('est'),dia=document.getElementById('dia'),intv=document.getElementById('intv'),tbl=document.getElementById('tbl');
+const diaFecha=document.getElementById('diaFecha'),qaBadge=document.getElementById('qaBadge'),estRef=document.getElementById('estRef');
+ESTACIONES.forEach((e,i)=>est.add(new Option(e,i)));
+DIAS.forEach((d,i)=>dia.add(new Option(d,i)));
+// Calcula el FC ligero/pesado automáticamente según el peaje y el mes de la fecha registrada
+function recalcFC(estIdx){
+ const meta=stationMeta[estIdx];
+ if(meta.peaje&&PEAJES_FC[meta.peaje]&&meta.fecha){
+  const mes=new Date(meta.fecha+'T00:00:00').getMonth();
+  meta.fcLig=PEAJES_FC[meta.peaje].lig[mes];meta.fcPes=PEAJES_FC[meta.peaje].pes[mes];meta.fcAuto=true;
+ } else if(!meta.peaje||!meta.fecha){meta.fcLig=1;meta.fcPes=1;meta.fcAuto=true;}
+}
+// Asigna la tasa de crecimiento oficial del departamento a la estación (si no ha sido sobreescrita manualmente)
+function recalcTasa(estIdx){
+ const meta=stationMeta[estIdx];
+ if(meta.departamento&&DEPARTAMENTOS_TASA[meta.departamento]){meta.rLig=DEPARTAMENTOS_TASA[meta.departamento].lig;meta.rPes=DEPARTAMENTOS_TASA[meta.departamento].pes;meta.rateAuto=true;}
+}
+function refreshDiaLabels(){
+ const labs=diasDesde(stationMeta[+est.value].fecha);
+ for(let i=0;i<dia.options.length;i++)dia.options[i].text=labs[i];
+}
+function loadMetaUI(){
+ refreshDiaLabels();
+ updateDiaFecha();
+ const meta=stationMeta[+est.value];
+ estRef.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">'+
+  '<span><b>'+ESTACIONES[+est.value]+'</b> | Peaje: '+(meta.peaje||'<i>sin definir</i>')+' | Departamento: '+(meta.departamento||'<i>sin definir</i>')+'</span>'+
+  '<span id="estVehTotal" style="font-weight:600;white-space:nowrap"></span>'+
+ '</div>';
+ updateVehTotal();
+}
+// Total de vehículos (en tiempo real) de la estación y día actualmente seleccionados
+function updateVehTotal(){
+ const el=document.getElementById('estVehTotal');
+ if(!el)return;
+ const total=dailyTotals(+est.value,+dia.value).reduce((a,b)=>a+b,0);
+ el.textContent='Vehículos: '+fmt(total);
+}
+function updateDiaFecha(){
+ const meta=stationMeta[+est.value];
+ if(meta.fecha){const d=new Date(meta.fecha+'T00:00:00');d.setDate(d.getDate()+(+dia.value));diaFecha.textContent='('+pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' - '+MESES[d.getMonth()]+')';}
+ else diaFecha.textContent='';
+}
+function updateQaBadge(){qaBadge.innerHTML=qaBadgeHtml(qaCheck(+est.value,+dia.value).diff);}
+function render(){
+ const min=+intv.value,labs=labels(min),editable=(min===BASE),estIdx=+est.value,dayIdx=+dia.value;
+ const m=editable?getBase(estIdx,dayIdx):aggregate(estIdx,dayIdx,min);
+ let h='<tr><th>Hora</th><th>E/S</th>'+VT.map(v=>'<th>'+v+'</th>').join('')+'</tr>',body='';
+ labs.forEach((lab,i)=>{
+  ['Entrada','Salida'].forEach((tipo,j)=>{
+   const r=i*2+j;
+   body+='<tr class="'+tipo.toLowerCase()+'">';
+   if(j===0)body+='<td class="hora" rowspan="2">'+lab+'</td>';
+   body+='<td class="tipo">'+tipo[0]+'</td>';
+   for(let c=0;c<COLS;c++)body+=editable?'<td contenteditable data-r="'+r+'" data-c="'+c+'">'+m[r][c]+'</td>':'<td>'+m[r][c]+'</td>';
+   body+='</tr>';
+  });
+ });
+ tbl.innerHTML=h+body;
+ document.getElementById('modo').innerHTML=editable
+  ?'<span class="fieldAuto">Editable (dato base)</span>'
+  :'<span class="fieldManual">Solo lectura</span>';
+ loadMetaUI();updateQaBadge();
+}
+tbl.addEventListener('input',e=>{const t=e.target;if(!t.matches('td[contenteditable]'))return;getBase(+est.value,+dia.value)[+t.dataset.r][+t.dataset.c]=parseInt(t.textContent)||0;updateQaBadge();updateVehTotal();});
+tbl.addEventListener('paste',e=>{
+ const t=e.target;if(!t.matches('td[contenteditable]'))return;e.preventDefault();
+ const txt=(e.clipboardData||window.clipboardData).getData('text');
+ const rows=txt.replace(/\r/g,'').split('\n').filter(r=>r.length);
+ const r0=+t.dataset.r,c0=+t.dataset.c,m=getBase(+est.value,+dia.value);
+ rows.forEach((line,dr)=>{line.split('\t').forEach((val,dc)=>{
+  const r=r0+dr,c=c0+dc;
+  if(m[r]&&m[r][c]!==undefined){m[r][c]=parseInt(val)||0;const cell=tbl.querySelector('td[data-r="'+r+'"][data-c="'+c+'"]');if(cell)cell.textContent=m[r][c];}
+ });});
+ updateQaBadge();updateVehTotal();
+});
+[est,dia,intv].forEach(s=>s.addEventListener('change',render));
+
+// ---- TAB DATOS DE ESTACIONES ----
+const metaTabla=document.getElementById('metaTabla');
+// Chip M3 que reemplaza a los antiguos emoji 🔵 (automático) / ✏️ (manual): borde verde vs. borde morado
+// Clase M3 que colorea directamente el valor del campo: verde = automático, azul = manual (sin texto "Auto"/"Manual")
+function fieldCls(auto){return auto?' class="fieldAuto"':' class="fieldManual"';}
+function diaSemanaDe(fecha){return fecha?DIAS[(new Date(fecha+'T00:00:00').getDay()+6)%7]:'-';}
+function renderMetaTabla(){
+ const cols=ESTACIONES.map((nombre,i)=>{const m=stationMeta[i];return{i,nombre,m};});
+ let h='<tr><th>Campo</th>'+cols.map(c=>'<th>'+c.nombre+(c.i>0?' <button type="button" class="delEstBtn" data-est="'+c.i+'" title="Eliminar '+c.nombre+'"><span class="ms" aria-hidden="true">delete</span></button>':'')+'</th>').join('')+
+  '<th style="width:40px"><button type="button" id="btnAddEst" class="addEstBtn" title="Añadir estación"><span class="ms" aria-hidden="true">add</span></button></th></tr>';
+ const row=(label,cellsFn)=>'<tr><td class="hora">'+label+'</td>'+cols.map(c=>'<td>'+cellsFn(c)+'</td>').join('')+'<td></td></tr>';
+ let body='';
+ body+=row('Fecha inicio',c=>'<input type="date"'+(c.i>0?fieldCls(c.m.fechaAuto):'')+' data-field="fecha" data-est="'+c.i+'" value="'+c.m.fecha+'">');
+ body+=row('Día (según fecha)',c=>'<b>'+diaSemanaDe(c.m.fecha)+'</b>');
+ body+=row('Peaje de referencia',c=>{let o='<option value="">--</option>';Object.keys(PEAJES_FC).forEach(p=>o+='<option value="'+p+'"'+(p===c.m.peaje?' selected':'')+'>'+p+'</option>');return '<select'+(c.i>0?fieldCls(c.m.peajeAuto):'')+' data-field="peaje" data-est="'+c.i+'">'+o+'</select>';});
+ body+=row('Departamento',c=>{let o='<option value="">--</option>';Object.keys(DEPARTAMENTOS_TASA).forEach(d=>o+='<option value="'+d+'"'+(d===c.m.departamento?' selected':'')+'>'+d+'</option>');return '<select'+(c.i>0?fieldCls(c.m.deptoAuto):'')+' data-field="departamento" data-est="'+c.i+'">'+o+'</select>';});
+ body+=row('Horizonte (años)',c=>'<input type="number" data-field="horizonte" data-est="'+c.i+'" value="'+c.m.horizonte+'" step="1" style="width:50px">');
+ body+=row('Tasa crec. Ligero %/año',c=>'<input type="number" step="0.01"'+fieldCls(c.m.rateAuto)+' style="width:55px" data-field="rLig" data-est="'+c.i+'" value="'+c.m.rLig+'">');
+ body+=row('Tasa crec. Pesado %/año',c=>'<input type="number" step="0.01"'+fieldCls(c.m.rateAuto)+' style="width:55px" data-field="rPes" data-est="'+c.i+'" value="'+c.m.rPes+'">');
+ body+=row('FC Ligeros',c=>'<input type="number" step="0.0001"'+fieldCls(c.m.fcAuto)+' style="width:70px" data-field="fcLig" data-est="'+c.i+'" value="'+c.m.fcLig+'">');
+ body+=row('FC Pesados',c=>'<input type="number" step="0.0001"'+fieldCls(c.m.fcAuto)+' style="width:70px" data-field="fcPes" data-est="'+c.i+'" value="'+c.m.fcPes+'">');
+ body+=row('% Tráfico Generado',c=>'<input type="number" step="0.1" style="width:55px" data-field="pGen" data-est="'+c.i+'" value="'+c.m.pGen+'">%');
+ metaTabla.innerHTML=h+body;
+}
+// Un único listener 'change' para toda la ficha (evita que 'input' + 'change' se pisen entre sí en los <select>, que era la causa de que Peaje/Departamento no aplicaran)
+// Fecha, Peaje y Departamento: al definirlos en la Estación 1 (índice 0) se copian a las demás estaciones que
+// aún sigan en modo automático (chip verde "Auto"). Editar directamente el campo en otra estación la desacopla (chip morado "Manual") de la Estación 1.
+metaTabla.addEventListener('change',e=>{
+ const t=e.target;if(!t.dataset.field)return;
+ const i=+t.dataset.est,meta=stationMeta[i],f=t.dataset.field;
+ if(f==='fecha'){
+  meta.fecha=t.value;if(i>0)meta.fechaAuto=false;recalcFC(i);
+  if(i===0)for(let k=1;k<ESTACIONES.length;k++)if(stationMeta[k].fechaAuto){stationMeta[k].fecha=t.value;recalcFC(k);}
+ }
+ else if(f==='peaje'){
+  meta.peaje=t.value;if(i>0)meta.peajeAuto=false;recalcFC(i);
+  if(i===0)for(let k=1;k<ESTACIONES.length;k++)if(stationMeta[k].peajeAuto){stationMeta[k].peaje=t.value;recalcFC(k);}
+ }
+ else if(f==='departamento'){
+  meta.departamento=t.value;if(i>0)meta.deptoAuto=false;recalcTasa(i);
+  if(i===0)for(let k=1;k<ESTACIONES.length;k++)if(stationMeta[k].deptoAuto){stationMeta[k].departamento=t.value;recalcTasa(k);}
+ }
+ else if(f==='horizonte'){meta.horizonte=+t.value||20;}
+ else if(f==='rLig'){meta.rLig=+t.value||0;meta.rateAuto=false;}
+ else if(f==='rPes'){meta.rPes=+t.value||0;meta.rateAuto=false;}
+ else if(f==='fcLig'){meta.fcLig=+t.value||1;meta.fcAuto=false;}
+ else if(f==='fcPes'){meta.fcPes=+t.value||1;meta.fcAuto=false;}
+ else if(f==='pGen'){meta.pGen=+t.value||0;}
+ renderMetaTabla();
+});
+metaTabla.addEventListener('click',e=>{
+ if(e.target.closest('#btnAddEst')){addEstacion();return;}
+ const delBtn=e.target.closest('.delEstBtn');
+ if(delBtn){removeEstacion(+delBtn.dataset.est);return;}
+});
+
+// ---- EXPORTAR / CARGAR DATOS (JSON) ----
+// Formato de intercambio: 1 archivo .json con la ficha técnica (stationMeta) + el conteo vehicular
+// crudo de 15 min (store) de todas las estaciones activas x 7 días. Es el mismo dato base que alimenta TODA
+// la aplicación (IMD, Resumen, Global, Gráficos, Proyección se recalculan a partir de esto).
+const datosMsg=document.getElementById('datosMsg');
+// Diálogo de confirmación propio (reemplaza al confirm() nativo del navegador)
+function showConfirmDialog({title,message,confirmText,confirmColor}){
+ return new Promise(resolve=>{
+  const overlay=document.createElement('div');
+  overlay.className='modalOverlay';
+  overlay.innerHTML='<div class="modalBox"><h4>'+title+'</h4><p>'+message+'</p><div class="modalBtns">'+
+   '<button type="button" class="modalBtn cancel">Cancelar</button>'+
+   '<button type="button" class="modalBtn confirm" style="background:'+(confirmColor||'#2e9e44')+'">'+(confirmText||'Continuar')+'</button></div></div>';
+  document.body.appendChild(overlay);
+  const cleanup=val=>{overlay.remove();document.removeEventListener('keydown',onKey);resolve(val);};
+  overlay.querySelector('.cancel').addEventListener('click',()=>cleanup(false));
+  overlay.querySelector('.confirm').addEventListener('click',()=>cleanup(true));
+  overlay.addEventListener('mousedown',e=>{if(e.target===overlay)cleanup(false);});
+  function onKey(e){if(e.key==='Escape')cleanup(false);}
+  document.addEventListener('keydown',onKey);
+  overlay.querySelector('.confirm').focus();
+ });
+}
+function showDatosMsg(text,cls){
+ datosMsg.textContent=text;datosMsg.className=cls;
+ clearTimeout(showDatosMsg._t);
+ if(cls==='ok')showDatosMsg._t=setTimeout(()=>{datosMsg.textContent='';datosMsg.className='';},7000);
+}
+function exportarDatos(){
+ // Asegura que las 35 combinaciones estación×día existan (aunque el usuario no las haya visitado todas)
+ for(let i=0;i<ESTACIONES.length;i++)for(let d=0;d<7;d++)getBase(i,d);
+ const payload={
+  formato:'conteo_vehicular_mtc',
+  version:1,
+  exportado:new Date().toISOString(),
+  vehiculos:VT,          // para validar compatibilidad al importar
+  estaciones:ESTACIONES,
+  slots15:SLOTS15,       // filas por día (96) — para validar dimensiones al importar
+  stationMeta:stationMeta,
+  store:store
+ };
+ const json=JSON.stringify(payload);
+ const blob=new Blob([json],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const ts=new Date().toISOString().slice(0,19).replace(/[-:T]/g,'').replace(/(\d{8})(\d{6})/,'$1_$2');
+ const a=document.createElement('a');
+ a.href=url;a.download='conteo_vehicular_datos_'+ts+'.json';
+ document.body.appendChild(a);a.click();a.remove();
+ URL.revokeObjectURL(url);
+ showDatosMsg('✅ Datos exportados: '+ESTACIONES.length+' estaciones × 7 días (archivo .json descargado).','ok');
+}
+function importarDatos(file){
+ const reader=new FileReader();
+ reader.onload=async e=>{
+  try{
+   const data=JSON.parse(e.target.result);
+   if(!data||typeof data!=='object')throw new Error('el archivo no contiene un JSON válido.');
+   if(!Array.isArray(data.stationMeta)||!data.stationMeta.length)
+    throw new Error('la ficha técnica ("stationMeta") no tiene el formato esperado.');
+   if(!data.store||typeof data.store!=='object')throw new Error('falta el conteo vehicular ("store") en el archivo.');
+   if(Array.isArray(data.vehiculos)&&data.vehiculos.length!==VT.length)
+    throw new Error('el archivo tiene '+data.vehiculos.length+' tipos de vehículo y esta versión de la app usa '+VT.length+'. No son compatibles.');
+   for(const k in data.store){
+    const m=data.store[k];
+    if(!Array.isArray(m)||m.length!==SLOTS15*2||!Array.isArray(m[0])||m[0].length!==VT.length)
+     throw new Error('los datos de conteo de "'+k+'" tienen dimensiones inválidas.');
+   }
+   const nEstArchivo=data.stationMeta.length;
+   const ok=await showConfirmDialog({
+    title:'Cargar datos',
+    message:'Esto reemplazará <b>todos</b> los datos actuales con los del archivo "'+file.name+'", que contiene '+nEstArchivo+' estación(es). Si es necesario se crearán o quitarán estaciones para que coincidan.',
+    confirmText:'Cargar y reemplazar',
+    confirmColor:'#3b6fb0'
+   });
+   if(!ok)return;
+   // ajusta el número de estaciones de la app para que coincida con el archivo importado (las crea si hacen falta)
+   while(ESTACIONES.length<nEstArchivo){ESTACIONES.push('Estación '+(ESTACIONES.length+1));stationMeta.push(makeStationMeta());}
+   while(ESTACIONES.length>nEstArchivo){ESTACIONES.pop();stationMeta.pop();}
+   if(Array.isArray(data.estaciones))data.estaciones.forEach((nombre,i)=>{if(typeof nombre==='string'&&nombre&&ESTACIONES[i]!==undefined)ESTACIONES[i]=nombre;});
+   // aplica ficha técnica (se mutan los objetos existentes para no romper otras referencias)
+   data.stationMeta.forEach((m,i)=>{if(stationMeta[i])Object.assign(stationMeta[i],m);});
+   // aplica conteo vehicular
+   for(const k in store)delete store[k];
+   Object.assign(store,data.store);
+   // refresca toda la interfaz
+   refreshEstacionSelects();
+   render();renderMetaTabla();
+   const activeBtn=document.querySelector('.tabbtn.active'),t=activeBtn&&activeBtn.dataset.t;
+   if(t==='imd')renderIMD();
+   if(t==='resumen')renderResumen();
+   if(t==='global')renderGlobal();
+   if(t==='graficos')renderGraficos();
+   if(t==='proyeccion')renderProy();
+   showDatosMsg('✅ Datos cargados desde "'+file.name+'" ('+nEstArchivo+' estación(es); '+(data.exportado?'exportado '+new Date(data.exportado).toLocaleString('es-PE'):'sin fecha')+').','ok');
+  }catch(err){
+   showDatosMsg('❌ No se pudo cargar el archivo: '+err.message,'bad');
+  }
+ };
+ reader.onerror=()=>showDatosMsg('❌ No se pudo leer el archivo seleccionado.','bad');
+ reader.readAsText(file);
+}
+document.getElementById('btnExportar').addEventListener('click',exportarDatos);
+const importFileInput=document.getElementById('importFile');
+document.getElementById('btnImportar').addEventListener('click',()=>importFileInput.click());
+importFileInput.addEventListener('change',e=>{
+ const file=e.target.files[0];
+ if(file)importarDatos(file);
+ importFileInput.value='';
+});
+
+// ---- TAB IMD ----
+const imdEst=document.getElementById('imdEst'),imdVista=document.getElementById('imdVista'),imdMeta=document.getElementById('imdMeta');
+ESTACIONES.forEach((e,i)=>imdEst.add(new Option(e,i)));
+function renderIMD(){
+ const estIdx=+imdEst.value,meta=stationMeta[estIdx],es=imdVista.value==='es';
+ imdMeta.innerHTML=(meta.fecha?'Semana desde '+meta.fecha+' ('+MESES[new Date(meta.fecha+'T00:00:00').getMonth()]+')':'Sin fecha registrada')+(meta.peaje?' | Peaje ref: '+meta.peaje:' | Sin peaje seleccionado')+' | FC Ligeros: <span class="'+(meta.fcAuto?'fieldAuto':'fieldManual')+'">'+meta.fcLig.toFixed(4)+'</span> | FC Pesados: <span class="'+(meta.fcAuto?'fieldAuto':'fieldManual')+'">'+meta.fcPes.toFixed(4)+'</span>';
+ // detalle diario
+ const diasLbl=diasDesde(meta.fecha);
+ let h='<tr><th>Día</th>'+(es?'<th>Sentido</th>':'')+VT.map(v=>'<th>'+v+'</th>').join('')+'<th>Total</th></tr>',body='';
+ const totE=new Array(COLS).fill(0),totS=new Array(COLS).fill(0),totTipo=new Array(COLS).fill(0);
+ for(let d=0;d<7;d++){
+  if(es){
+   const t=dailyTotalsSentido(estIdx,d);
+   t.ent.forEach((v,c)=>totE[c]+=v);t.sal.forEach((v,c)=>totS[c]+=v);
+   [['Entrada',t.ent],['Salida',t.sal]].forEach(([lab,arr],j)=>{
+    const tot=arr.reduce((a,b)=>a+b,0);
+    body+='<tr>'+(j===0?'<td class="hora" rowspan="2">'+diasLbl[d]+'</td>':'')+'<td>'+lab+'</td>'+arr.map(v=>'<td>'+v+'</td>').join('')+'<td><b>'+tot+'</b></td></tr>';
+   });
+  }else{
+   const t=dailyTotals(estIdx,d),tot=t.reduce((a,b)=>a+b,0);
+   t.forEach((v,c)=>totTipo[c]+=v);
+   body+='<tr><td class="hora">'+diasLbl[d]+'</td>'+t.map(v=>'<td>'+v+'</td>').join('')+'<td><b>'+tot+'</b></td></tr>';
+  }
+ }
+ if(es){
+  const totEsum=totE.reduce((a,b)=>a+b,0),totSsum=totS.reduce((a,b)=>a+b,0);
+  body+='<tr class="totrow"><td class="hora" rowspan="2">Total semana</td><td>Entrada</td>'+totE.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totEsum+'</td></tr>'+
+        '<tr class="totrow"><td>Salida</td>'+totS.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totSsum+'</td></tr>';
+ }else{
+  const totSum=totTipo.reduce((a,b)=>a+b,0);
+  body+='<tr class="totrow"><td class="hora">Total semana</td>'+totTipo.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totSum+'</td></tr>';
+ }
+ // IMD / IMDa (se agregan a continuación de la fila "Total semana", en la misma tabla)
+ const fila2=(lab,arr)=>'<tr class="totrow"><td class="hora">'+lab+'</td>'+(es?'<td></td>':'')+arr.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td><b>'+fmt(arr.reduce((a,b)=>a+b,0))+'</b></td></tr>';
+ const filaES2=(lab,arrE,arrS)=>'<tr class="totrow"><td class="hora" rowspan="2">'+lab+'</td><td>Entrada</td>'+arrE.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td><b>'+fmt(arrE.reduce((a,b)=>a+b,0))+'</b></td></tr>'+
+  '<tr class="totrow"><td>Salida</td>'+arrS.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td><b>'+fmt(arrS.reduce((a,b)=>a+b,0))+'</b></td></tr>';
+ const filaFC=()=>'<tr class="totrow"><td class="hora">FC (Ligero/Pesado)</td>'+(es?'<td></td>':'')+VT.map((v,c)=>'<td>'+(LIG_IDX.includes(c)?meta.fcLig.toFixed(4):meta.fcPes.toFixed(4))+'</td>').join('')+'<td>-</td></tr>';
+ let imdaTotal;
+ if(es){
+  const s=weeklyIMDsSentido(estIdx),imdaE=aplicaFC(estIdx,s.ent),imdaS=aplicaFC(estIdx,s.sal);
+  body+=filaES2('IMDs (semanal)',s.ent,s.sal)+filaFC()+filaES2('IMDa (FC Lig='+meta.fcLig+' / Pes='+meta.fcPes+')',imdaE,imdaS);
+  imdaTotal=imdaE.map((v,c)=>v+imdaS[c]);
+ }else{
+  const imds=weeklyIMDs(estIdx),imda=imdaPorTipo(estIdx);
+  body+=fila2('IMDs (semanal)',imds)+filaFC()+fila2('IMDa (FC Lig='+meta.fcLig+' / Pes='+meta.fcPes+')',imda);
+  imdaTotal=imda;
+ }
+ document.getElementById('imdDetalle').innerHTML='<caption style="caption-side:top;font-weight:bold;padding:4px">Volumen diario e IMD por tipo de vehículo (24h'+(es?', por sentido':', E+S')+')</caption>'+h+body;
+ const clsA=classify(imdaTotal);
+ document.getElementById('imdKpi').innerHTML=
+  '<div>IMDa Total<b>'+fmt(clsA.total)+'</b></div>'+
+  '<div>Vehículos Ligeros<b>'+fmt(clsA.lig)+' ('+fmt(100*clsA.lig/clsA.total)+'%)</b></div>'+
+  '<div>Vehículos Pesados<b>'+fmt(clsA.pes)+' ('+fmt(100*clsA.pes/clsA.total)+'%)</b></div>';
+}
+[imdEst,imdVista].forEach(s=>s.addEventListener('change',renderIMD));
+
+// ---- TAB RESUMEN ----
+const resEst=document.getElementById('resEst'),resVista=document.getElementById('resVista');
+ESTACIONES.forEach((e,i)=>resEst.add(new Option(e,i)));
+function renderResumen(){
+ const estIdx=+resEst.value,es=resVista.value==='es',diasLbl=diasDesde(stationMeta[estIdx].fecha);
+ // Totales por día de la semana (para columnas) y acumulados semanales
+ const dayTotals=[],dayTotalsSentido=[];
+ for(let d=0;d<7;d++){dayTotals.push(dailyTotals(estIdx,d));dayTotalsSentido.push(dailyTotalsSentido(estIdx,d));}
+ const totalSemana=dayTotals.reduce((a,t)=>a+t.reduce((x,y)=>x+y,0),0);
+ let hc,bc='';
+ if(es){
+  hc='<tr><th>Tipo de Vehículo</th><th>Sentido</th>'+diasLbl.map(d=>'<th>'+d+'</th>').join('')+'<th>Volumen</th><th>%</th></tr>';
+  VT.forEach((v,c)=>{
+   const totE=dayTotalsSentido.reduce((a,t)=>a+t.ent[c],0),totS=dayTotalsSentido.reduce((a,t)=>a+t.sal[c],0);
+   bc+='<tr><td class="hora" rowspan="2">'+v+'</td><td>Entrada</td>'+dayTotalsSentido.map(t=>'<td>'+t.ent[c]+'</td>').join('')+'<td><b>'+totE+'</b></td><td>'+fmt(100*totE/totalSemana)+'%</td></tr>'+
+       '<tr><td>Salida</td>'+dayTotalsSentido.map(t=>'<td>'+t.sal[c]+'</td>').join('')+'<td><b>'+totS+'</b></td><td>'+fmt(100*totS/totalSemana)+'%</td></tr>';
+  });
+  const totEdia=dayTotalsSentido.map(t=>t.ent.reduce((a,b)=>a+b,0)),totSdia=dayTotalsSentido.map(t=>t.sal.reduce((a,b)=>a+b,0));
+  const totEsum=totEdia.reduce((a,b)=>a+b,0),totSsum=totSdia.reduce((a,b)=>a+b,0);
+  bc+='<tr class="totrow"><td class="hora" rowspan="2">Total</td><td>Entrada</td>'+totEdia.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totEsum+'</td><td>'+fmt(100*totEsum/totalSemana)+'%</td></tr>'+
+      '<tr class="totrow"><td>Salida</td>'+totSdia.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totSsum+'</td><td>'+fmt(100*totSsum/totalSemana)+'%</td></tr>';
+ }else{
+  hc='<tr><th>Tipo de Vehículo</th>'+diasLbl.map(d=>'<th>'+d+'</th>').join('')+'<th>Volumen</th><th>%</th></tr>';
+  VT.forEach((v,c)=>{
+   const tot=dayTotals.reduce((a,t)=>a+t[c],0);
+   bc+='<tr><td>'+v+'</td>'+dayTotals.map(t=>'<td>'+t[c]+'</td>').join('')+'<td><b>'+tot+'</b></td><td>'+fmt(100*tot/totalSemana)+'%</td></tr>';
+  });
+  const totDia=dayTotals.map(t=>t.reduce((a,b)=>a+b,0)),totSum=totDia.reduce((a,b)=>a+b,0);
+  bc+='<tr class="totrow"><td>Total</td>'+totDia.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totSum+'</td><td>'+fmt(100*totSum/totalSemana)+'%</td></tr>';
+ }
+ document.getElementById('resComposicion').innerHTML=hc+bc;
+ // Distribución horaria por día de la semana (24h x 7 días)
+ const hourlyPerDay=[],hourlyPerDayE=[],hourlyPerDayS=[];
+ for(let d=0;d<7;d++){
+  const m=getBase(estIdx,d),hE=[],hS=[],hT=[];
+  for(let h=0;h<24;h++){let vE=0,vS=0;for(let q=0;q<4;q++){const slot=h*4+q;vE+=m[slot*2].reduce((a,b)=>a+b,0);vS+=m[slot*2+1].reduce((a,b)=>a+b,0);}hE.push(vE);hS.push(vS);hT.push(vE+vS);}
+  hourlyPerDayE.push(hE);hourlyPerDayS.push(hS);hourlyPerDay.push(hT);
+ }
+ const profile=weeklyAvgProfile(estIdx),pk=peakFromProfile(profile);
+ let hh,bh='';
+ if(es){
+  hh='<tr><th>Hora</th><th>Sentido</th>'+diasLbl.map(d=>'<th>'+d+'</th>').join('')+'<th>Total</th><th>%</th></tr>';
+  for(let h=0;h<24;h++){
+   const hl=h===pk.hpIdx?' style="background:#ffe6b3;font-weight:bold"':'';
+   const totE=hourlyPerDayE.reduce((a,day)=>a+day[h],0),totS=hourlyPerDayS.reduce((a,day)=>a+day[h],0);
+   bh+='<tr'+hl+'><td class="hora" rowspan="2">'+pad(h)+':00 - '+pad(h+1)+':00</td><td>Entrada</td>'+hourlyPerDayE.map(day=>'<td>'+day[h]+'</td>').join('')+'<td><b>'+totE+'</b></td><td>'+fmt(100*totE/totalSemana)+'%</td></tr>'+
+       '<tr'+hl+'><td>Salida</td>'+hourlyPerDayS.map(day=>'<td>'+day[h]+'</td>').join('')+'<td><b>'+totS+'</b></td><td>'+fmt(100*totS/totalSemana)+'%</td></tr>';
+  }
+  const totEdia=hourlyPerDayE.map(day=>day.reduce((a,b)=>a+b,0)),totSdia=hourlyPerDayS.map(day=>day.reduce((a,b)=>a+b,0));
+  const totEsum2=totEdia.reduce((a,b)=>a+b,0),totSsum2=totSdia.reduce((a,b)=>a+b,0);
+  bh+='<tr class="totrow"><td class="hora" rowspan="2">Total</td><td>Entrada</td>'+totEdia.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totEsum2+'</td><td>'+fmt(100*totEsum2/totalSemana)+'%</td></tr>'+
+      '<tr class="totrow"><td>Salida</td>'+totSdia.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totSsum2+'</td><td>'+fmt(100*totSsum2/totalSemana)+'%</td></tr>';
+ }else{
+  hh='<tr><th>Hora</th>'+diasLbl.map(d=>'<th>'+d+'</th>').join('')+'<th>Total</th><th>%</th></tr>';
+  for(let h=0;h<24;h++){
+   const totH=hourlyPerDay.reduce((a,day)=>a+day[h],0);
+   bh+='<tr'+(h===pk.hpIdx?' style="background:#ffe6b3;font-weight:bold"':'')+'><td>'+pad(h)+':00 - '+pad(h+1)+':00</td>'+hourlyPerDay.map(day=>'<td>'+day[h]+'</td>').join('')+'<td><b>'+totH+'</b></td><td>'+fmt(100*totH/totalSemana)+'%</td></tr>';
+  }
+  const totDia=hourlyPerDay.map(day=>day.reduce((a,b)=>a+b,0)),totSum2=totDia.reduce((a,b)=>a+b,0);
+  bh+='<tr class="totrow"><td>Total</td>'+totDia.map(v=>'<td>'+v+'</td>').join('')+'<td>'+totSum2+'</td><td>'+fmt(100*totSum2/totalSemana)+'%</td></tr>';
+ }
+ document.getElementById('resHoraria').innerHTML=hh+bh;
+ const qa=qaCheck(estIdx,null);
+ document.getElementById('resKpi').innerHTML=
+  '<div>Volumen Total Semanal<b>'+fmt(totalSemana)+'</b></div>'+
+  '<div>Hora de Máxima Demanda (prom. semanal)<b>'+pad(pk.hpIdx)+':00-'+pad(pk.hpIdx+1)+':00</b></div>'+
+  '<div>Volumen Hora Punta (prom. diario)<b>'+fmt(pk.volHora)+'</b></div>'+
+  '<div>Factor Hora Punta (FHP)<b>'+pk.fhp.toFixed(2)+'</b></div>'+
+  '<div>Consistencia E/S (semanal)<b>'+qaBadgeHtml(qa.diff)+'</b></div>';
+}
+[resEst,resVista].forEach(s=>s.addEventListener('change',renderResumen));
+
+// ---- TAB RESUMEN GLOBAL ----
+function renderGlobal(){
+ const es=document.getElementById('globalVista').value==='es';
+ let h='<tr><th>Estación</th>'+(es?'<th>Sentido</th>':'')+'<th>Fecha</th><th>Peaje Ref.</th><th>IMDa Ligeros</th><th>IMDa Pesados</th><th>IMDa Total</th><th>% Ligero</th><th>% Pesado</th><th>Hora Punta (prom. semanal)</th><th>FHP</th><th>Δ E/S semanal</th></tr>',body='';
+ ESTACIONES.forEach((nombre,estIdx)=>{
+  const meta=stationMeta[estIdx],qa=qaCheck(estIdx,null);
+  if(es){
+   const s=weeklyIMDsSentido(estIdx),imdaE=aplicaFC(estIdx,s.ent),imdaS=aplicaFC(estIdx,s.sal);
+   const clsE=classify(imdaE),clsS=classify(imdaS);
+   const profS=weeklyAvgProfileSentido(estIdx),pkE=peakFromProfile(profS.ent),pkS=peakFromProfile(profS.sal);
+   body+='<tr><td class="hora" rowspan="2">'+nombre+'</td><td>Entrada</td><td rowspan="2">'+(meta.fecha||'-')+'</td><td rowspan="2">'+(meta.peaje||'-')+'</td>'+
+    '<td>'+fmt(clsE.lig)+'</td><td>'+fmt(clsE.pes)+'</td><td><b>'+fmt(clsE.total)+'</b></td>'+
+    '<td>'+fmt(100*clsE.lig/clsE.total)+'%</td><td>'+fmt(100*clsE.pes/clsE.total)+'%</td>'+
+    '<td>'+pad(pkE.hpIdx)+':00-'+pad(pkE.hpIdx+1)+':00</td><td>'+pkE.fhp.toFixed(2)+'</td>'+
+    '<td rowspan="2">'+qaBadgeHtml(qa.diff)+'</td></tr>';
+   body+='<tr><td>Salida</td>'+
+    '<td>'+fmt(clsS.lig)+'</td><td>'+fmt(clsS.pes)+'</td><td><b>'+fmt(clsS.total)+'</b></td>'+
+    '<td>'+fmt(100*clsS.lig/clsS.total)+'%</td><td>'+fmt(100*clsS.pes/clsS.total)+'%</td>'+
+    '<td>'+pad(pkS.hpIdx)+':00-'+pad(pkS.hpIdx+1)+':00</td><td>'+pkS.fhp.toFixed(2)+'</td></tr>';
+  }else{
+   const imda=imdaPorTipo(estIdx),cls=classify(imda);
+   const profile=weeklyAvgProfile(estIdx),pk=peakFromProfile(profile);
+   body+='<tr><td class="hora">'+nombre+'</td><td>'+(meta.fecha||'-')+'</td><td>'+(meta.peaje||'-')+'</td>'+
+    '<td>'+fmt(cls.lig)+'</td><td>'+fmt(cls.pes)+'</td><td><b>'+fmt(cls.total)+'</b></td>'+
+    '<td>'+fmt(100*cls.lig/cls.total)+'%</td><td>'+fmt(100*cls.pes/cls.total)+'%</td>'+
+    '<td>'+pad(pk.hpIdx)+':00-'+pad(pk.hpIdx+1)+':00</td><td>'+pk.fhp.toFixed(2)+'</td>'+
+    '<td>'+qaBadgeHtml(qa.diff)+'</td></tr>';
+  }
+ });
+ document.getElementById('globalTabla').innerHTML=h+body;
+ renderGlobalPorEstacion(es);
+ renderGlobalConteo(es);
+ renderGlobalResumen();
+ renderBarEstacion();
+}
+// Cuadro: resumen general por estación (fechas de conteo, peaje, conteo total y % Ligero/Pesado)
+// Respeta el selector "Sentido" igual que la tabla 1 (Ambos E+S combinado, o filas separadas Entrada/Salida)
+function renderGlobalPorEstacion(es){
+ let h='<tr><th>Estación</th>'+(es?'<th>Sentido</th>':'')+'<th>Fecha Inicio Conteo</th><th>Fecha Final Conteo</th><th>Peaje Ref.</th><th>Conteo Total</th><th>% Ligero</th><th>% Pesado</th></tr>',body='';
+ ESTACIONES.forEach((nombre,i)=>{
+  const meta=stationMeta[i];
+  if(es){
+   const entArr=new Array(COLS).fill(0),salArr=new Array(COLS).fill(0);
+   for(let d=0;d<7;d++){const t=dailyTotalsSentido(i,d);t.ent.forEach((v,c)=>entArr[c]+=v);t.sal.forEach((v,c)=>salArr[c]+=v);}
+   const clsE=classify(entArr),clsS=classify(salArr);
+   body+='<tr><td class="hora" rowspan="2">'+nombre+'</td><td>Entrada</td><td rowspan="2">'+(meta.fecha||'-')+'</td><td rowspan="2">'+fechaFinConteo(meta.fecha)+'</td><td rowspan="2">'+(meta.peaje||'-')+'</td>'+
+    '<td><b>'+fmt(clsE.total)+'</b></td><td>'+fmt(clsE.total?100*clsE.lig/clsE.total:0)+'%</td><td>'+fmt(clsE.total?100*clsE.pes/clsE.total:0)+'%</td></tr>';
+   body+='<tr><td>Salida</td>'+
+    '<td><b>'+fmt(clsS.total)+'</b></td><td>'+fmt(clsS.total?100*clsS.lig/clsS.total:0)+'%</td><td>'+fmt(clsS.total?100*clsS.pes/clsS.total:0)+'%</td></tr>';
+  }else{
+   const cls=classify(weekRawByCol(i)),tot=cls.total||0;
+   body+='<tr><td class="hora">'+nombre+'</td><td>'+(meta.fecha||'-')+'</td><td>'+fechaFinConteo(meta.fecha)+'</td><td>'+(meta.peaje||'-')+'</td>'+
+    '<td><b>'+fmt(tot)+'</b></td><td>'+fmt(tot?100*cls.lig/tot:0)+'%</td><td>'+fmt(tot?100*cls.pes/tot:0)+'%</td></tr>';
+  }
+ });
+ document.getElementById('globalPorEstacion').innerHTML='<caption style="caption-side:top;font-weight:bold;padding:4px">Resumen general por estación</caption>'+h+body;
+}
+// Gráficos de barras: vehículos totales y IMDa por estación
+function renderBarEstacion(){
+ const valores=ESTACIONES.map((_,i)=>classify(weekRawByCol(i)).total);
+ drawBarEstacion('cBarEstacion',560,400,ESTACIONES,valores,'Vehículos contabilizados');
+ const imdaVals=ESTACIONES.map((_,i)=>classify(imdaPorTipo(i)).total);
+ drawBarEstacion('cBarEstacionIMDa',560,400,ESTACIONES,imdaVals,'IMDa (veh/día)');
+}
+// Tabla de conteo/volumen semanal por tipo de vehículo y estación, con fila y columna de Total.
+// Respeta el selector "Vista": Ambos (E+S combinado) o Entrada y Salida (columna Sentido, como en las demás tablas).
+function renderGlobalConteo(es){
+ const porEstE=ESTACIONES.map((_,i)=>{
+  const tot=new Array(COLS).fill(0);
+  for(let d=0;d<7;d++)dailyTotalsSentido(i,d).ent.forEach((v,c)=>tot[c]+=v);
+  return tot;
+ });
+ const porEstS=ESTACIONES.map((_,i)=>{
+  const tot=new Array(COLS).fill(0);
+  for(let d=0;d<7;d++)dailyTotalsSentido(i,d).sal.forEach((v,c)=>tot[c]+=v);
+  return tot;
+ });
+ let h,body='';
+ if(es){
+  h='<tr><th>Tipo de Vehículo</th><th>Sentido</th>'+ESTACIONES.map(n=>'<th>'+n+'</th>').join('')+'<th>Total</th></tr>';
+  const totPorEstE=new Array(ESTACIONES.length).fill(0),totPorEstS=new Array(ESTACIONES.length).fill(0);
+  VT.forEach((nombre,c)=>{
+   const valsE=porEstE.map(arr=>arr[c]),valsS=porEstS.map(arr=>arr[c]);
+   valsE.forEach((v,i)=>totPorEstE[i]+=v);valsS.forEach((v,i)=>totPorEstS[i]+=v);
+   const totFilaE=valsE.reduce((a,b)=>a+b,0),totFilaS=valsS.reduce((a,b)=>a+b,0);
+   body+='<tr><td class="hora" rowspan="2">'+nombre+'</td><td>Entrada</td>'+valsE.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td><b>'+fmt(totFilaE)+'</b></td></tr>'+
+         '<tr><td>Salida</td>'+valsS.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td><b>'+fmt(totFilaS)+'</b></td></tr>';
+  });
+  const granTotalE=totPorEstE.reduce((a,b)=>a+b,0),granTotalS=totPorEstS.reduce((a,b)=>a+b,0);
+  body+='<tr class="totrow"><td class="hora" rowspan="2">Total</td><td>Entrada</td>'+totPorEstE.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td>'+fmt(granTotalE)+'</td></tr>'+
+        '<tr class="totrow"><td>Salida</td>'+totPorEstS.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td>'+fmt(granTotalS)+'</td></tr>';
+ }else{
+  h='<tr><th>Tipo de Vehículo</th>'+ESTACIONES.map(n=>'<th>'+n+'</th>').join('')+'<th>Total</th></tr>';
+  const porEst=porEstE.map((arr,i)=>arr.map((v,c)=>v+porEstS[i][c]));
+  const totPorEst=new Array(ESTACIONES.length).fill(0);
+  VT.forEach((nombre,c)=>{
+   const vals=porEst.map(arr=>arr[c]);
+   vals.forEach((v,i)=>totPorEst[i]+=v);
+   const totFila=vals.reduce((a,b)=>a+b,0);
+   body+='<tr><td class="hora">'+nombre+'</td>'+vals.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td><b>'+fmt(totFila)+'</b></td></tr>';
+  });
+  const granTotal=totPorEst.reduce((a,b)=>a+b,0);
+  body+='<tr class="totrow"><td class="hora">Total</td>'+totPorEst.map(v=>'<td>'+fmt(v)+'</td>').join('')+'<td>'+fmt(granTotal)+'</td></tr>';
+ }
+ document.getElementById('globalConteo').innerHTML='<caption style="caption-side:top;font-weight:bold;padding:4px">Conteo vehicular semanal'+(es?', por sentido':' (E+S)')+' por tipo de vehículo y estación</caption>'+h+body;
+}
+// Cuadro resumen: filas = tipo de vehículo (x Sentido), columnas = IMDs por estación, FCE, IMDa por estación
+function renderGlobalResumen(){
+ const nE=ESTACIONES.length,es=document.getElementById('globalVista').value==='es';
+ const sentidoPorEst=ESTACIONES.map((_,i)=>weeklyIMDsSentido(i)); // [{ent[],sal[]}...]
+ // vistas: cada una es {lab, get(s)->array[COLS]} — en modo 'ambos' se combina Entrada+Salida en una sola fila
+ const vistas=es?[{lab:'E',get:s=>s.ent},{lab:'S',get:s=>s.sal}]:[{lab:'E+S',get:s=>s.ent.map((v,c)=>v+s.sal[c])}];
+ // FCE de referencia: promedio del FC (lig/pes según tipo) entre las estaciones con peaje asignado
+ function fceProm(tipoLig){
+  const vals=stationMeta.filter(m=>m.peaje).map(m=>tipoLig?m.fcLig:m.fcPes);
+  return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:1;
+ }
+ let h='<tr><th rowspan="2">Tipo de Vehículo</th>'+(es?'<th rowspan="2">Sentido</th>':'')+'<th colspan="'+nE+'">IMDs (semanal)</th><th rowspan="2">FCE</th><th colspan="'+nE+'">IMDa (anual)</th></tr><tr>'+
+  ESTACIONES.map(n=>'<th>'+n+'</th>').join('')+ESTACIONES.map(n=>'<th>'+n+'</th>').join('')+'</tr>',body='';
+ function fila(tipoLig,valsPorEst,fce){
+  const imda=valsPorEst.map((v,i)=>v*(tipoLig?stationMeta[i].fcLig:stationMeta[i].fcPes));
+  return '<td>'+valsPorEst.map(v=>fmt(v)).join('</td><td>')+'</td><td><b>'+fce.toFixed(4)+'</b></td><td>'+imda.map(v=>fmt(v)).join('</td><td>')+'</td>';
+ }
+ const rs=vistas.length>1?' rowspan="'+vistas.length+'"':'';
+ const fceLig=fceProm(true),fcePes=fceProm(false);
+ VT.forEach((nombre,c)=>{
+  const esLig=LIG_IDX.includes(c),fce=esLig?fceLig:fcePes;
+  vistas.forEach((v,j)=>{
+   const vals=ESTACIONES.map((_,i)=>v.get(sentidoPorEst[i])[c]);
+   body+='<tr>'+(j===0?'<td'+rs+' class="hora">'+nombre+'</td>':'')+(es?'<td>'+v.lab+'</td>':'')+fila(esLig,vals,fce)+'</tr>';
+  });
+ });
+ // Subtotales Ligeros / Pesados / Total
+ [['Ligeros',LIG_IDX,true,fceLig],['Pesados',PES_IDX,false,fcePes]].forEach(([label,idx,esLig,fce])=>{
+  vistas.forEach((v,j)=>{
+   const vals=ESTACIONES.map((_,i)=>{const arr=v.get(sentidoPorEst[i]);return idx.reduce((a,c)=>a+arr[c],0);});
+   body+='<tr style="background:#eef4ff">'+(j===0?'<td'+rs+' class="hora"><b>'+label+'</b></td>':'')+(es?'<td>'+v.lab+'</td>':'')+fila(esLig,vals,fce)+'</tr>';
+  });
+ });
+ vistas.forEach((v,j)=>{
+  const imds=ESTACIONES.map((_,i)=>{const arr=v.get(sentidoPorEst[i]);return arr.reduce((a,b)=>a+b,0);});
+  const imda=ESTACIONES.map((_,i)=>{const arr=v.get(sentidoPorEst[i]);return LIG_IDX.reduce((a,c)=>a+arr[c]*stationMeta[i].fcLig,0)+PES_IDX.reduce((a,c)=>a+arr[c]*stationMeta[i].fcPes,0);});
+  body+='<tr style="background:#dde6ee">'+(j===0?'<td'+rs+' class="hora"><b>Total</b></td>':'')+(es?'<td>'+v.lab+'</td>':'')+'<td>'+imds.map(x=>fmt(x)).join('</td><td>')+'</td><td>-</td><td>'+imda.map(x=>fmt(x)).join('</td><td>')+'</td></tr>';
+ });
+ document.getElementById('globalResumen').innerHTML=h+body;
+}
+document.getElementById('globalVista').addEventListener('change',renderGlobal);
+
+// ---- TAB PROYECCIÓN ----
+const proyEst=document.getElementById('proyEst'),proyMeta=document.getElementById('proyMeta'),proyPaso=document.getElementById('proyPaso');
+ESTACIONES.forEach((e,i)=>proyEst.add(new Option(e,i)));
+proyEst.addEventListener('change',renderProy);
+proyPaso.addEventListener('change',renderProy);
+// Genera la lista de años a mostrar según el paso elegido: siempre incluye el Año 0, el Año 1,
+// y luego los múltiplos del paso (paso, 2*paso, 3*paso...) hasta el horizonte n (que también se incluye siempre).
+function proyYears(n,step){
+ const set=new Set([0,1]);
+ for(let y=step;y<=n;y+=step)set.add(y);
+ set.add(n);
+ return[...set].filter(y=>y>=0&&y<=n).sort((a,b)=>a-b);
+}
+function renderProy(){
+ const estIdx=+proyEst.value,meta=stationMeta[estIdx],n=meta.horizonte||20,rLig=meta.rLig/100,rPes=meta.rPes/100,fGen=1+(meta.pGen||0)/100;
+ proyMeta.innerHTML=(meta.departamento?'Departamento: '+meta.departamento:'<i>Sin departamento asignado</i>')+
+  ' | Horizonte: '+n+' años | Tasa Ligeros: <span class="'+(meta.rateAuto?'fieldAuto':'fieldManual')+'">'+fmt(meta.rLig)+'%/año</span>'+
+  ' | Tasa Pesados: <span class="'+(meta.rateAuto?'fieldAuto':'fieldManual')+'">'+fmt(meta.rPes)+'%/año</span>'+
+  ' | % Tráfico Generado: '+fmt(meta.pGen||0)+'%'+
+  ' | FC Ligeros: '+meta.fcLig.toFixed(4)+' | FC Pesados: '+meta.fcPes.toFixed(4);
+ const imda=imdaPorTipo(estIdx),cls=classify(imda);
+ const years=proyYears(n,+proyPaso.value);
+ // Tráfico Proyectado = Tráfico Normal (IMDa×(1+r)^n) + Tráfico Generado (% del Normal, ver nota metodológica de la pestaña)
+ let h='<tr><th rowspan="2">Año</th><th colspan="2">Tráfico Normal</th><th rowspan="2">Total Normal</th><th colspan="2">Tráfico Generado</th><th rowspan="2">Total Generado</th><th rowspan="2">Total Proyectado</th></tr>'+
+  '<tr><th>Veh. Ligeros</th><th>Veh. Pesados</th><th>Veh. Ligeros</th><th>Veh. Pesados</th></tr>',body='';
+ years.forEach(t=>{
+  const lig=cls.lig*Math.pow(1+rLig,t),pes=cls.pes*Math.pow(1+rPes,t),normal=lig+pes;
+  const ligGen=lig*(fGen-1),pesGen=pes*(fGen-1),gen=normal*(fGen-1),proyectado=normal+gen;
+  body+='<tr><td class="hora">'+t+'</td><td>'+fmt(lig)+'</td><td>'+fmt(pes)+'</td><td><b>'+fmt(normal)+'</b></td>'+
+   '<td>'+fmt(ligGen)+'</td><td>'+fmt(pesGen)+'</td><td><b>'+fmt(gen)+'</b></td><td><b>'+fmt(proyectado)+'</b></td></tr>';
+ });
+ document.getElementById('proyTabla').innerHTML=h+body;
+ // Tabla por tipo de vehículo x año: Tránsito Normal (por tipo) + Tránsito Generado (por tipo) + totales
+ const ncols=years.length+1;
+ let h2='<tr><th>Tipo de Vehículo</th>'+years.map(t=>'<th>Año '+t+'</th>').join('')+'</tr>',body2='';
+ // valor normal de un tipo de vehículo c en el año t
+ const normalTipo=(c,t)=>{const r=LIG_IDX.includes(c)?rLig:rPes;return imda[c]*Math.pow(1+r,t);};
+ // total normal (ligeros+pesados) en el año t
+ const totalNormal=t=>cls.lig*Math.pow(1+rLig,t)+cls.pes*Math.pow(1+rPes,t);
+ // -- Tránsito Normal --
+ body2+='<tr style="background:#c9d6e3"><td colspan="'+ncols+'"><b>Tránsito Normal</b></td></tr>';
+ VT.forEach((nombre,c)=>{
+  body2+='<tr><td class="hora">'+nombre+'</td>'+years.map(t=>'<td>'+fmt(normalTipo(c,t))+'</td>').join('')+'</tr>';
+ });
+ body2+='<tr style="background:#eef4ff"><td class="hora"><b>Total Tráfico Normal</b></td>'+years.map(t=>'<td><b>'+fmt(totalNormal(t))+'</b></td>').join('')+'</tr>';
+ // -- Tránsito Generado --
+ body2+='<tr style="background:#c9d6e3"><td colspan="'+ncols+'"><b>Tránsito Generado</b></td></tr>';
+ VT.forEach((nombre,c)=>{
+  body2+='<tr><td class="hora">'+nombre+'</td>'+years.map(t=>'<td>'+fmt(normalTipo(c,t)*(fGen-1))+'</td>').join('')+'</tr>';
+ });
+ // -- Totales --
+ body2+='<tr style="background:#eef4ff"><td class="hora"><b>Total Tráfico Generado</b></td>'+years.map(t=>'<td><b>'+fmt(totalNormal(t)*(fGen-1))+'</b></td>').join('')+'</tr>';
+ body2+='<tr style="background:#dde6ee"><td class="hora"><b>Total Tráfico Proyectado</b></td>'+years.map(t=>'<td><b>'+fmt(totalNormal(t)*fGen)+'</b></td>').join('')+'</tr>';
+ document.getElementById('proyTablaTipo').innerHTML=h2+body2;
+}
+
+// ---- TAB GRÁFICOS ----
+// Paleta: 6 tonos azul/verde para vehículos ligeros (LIG_IDX, incluye Micro) + 14 tonos naranja/rojo para pesados (PES_IDX)
+const VT_COLORS=['#1F77B4','#3AA6B9','#17A398','#2ECC71','#5DADE2','#48C9B0','#F39C12','#E67E22','#E74C3C','#C0392B','#D35400','#A04000','#EB984E','#CB4335','#B03A2E','#943126','#78281F','#6E2C00','#A93226','#616A6B'];
+const COL_ENT='#2E86AB',COL_SAL='#E67E22',COL_LIG='#2ECC71',COL_PES='#E74C3C';
+const gEst=document.getElementById('gEst'),gInd=document.getElementById('gInd'),gMeta=document.getElementById('gMeta'),gKpi=document.getElementById('gKpi');
+ESTACIONES.forEach((e,i)=>gEst.add(new Option(e,i)));
+// Se sobre-renderiza a un mínimo de 3.5x la resolución real de pantalla (no solo el devicePixelRatio
+// tal cual), para que al hacer zoom con el trackpad/gestos (o zoom de página) el canvas tenga pixeles
+// de sobra y no se vea borroso/pixelado al acercarse.
+function dpr(){return Math.max(window.devicePixelRatio||1,3.5);}
+function setupCanvas(id,cssW,cssH){
+ const c=document.getElementById(id),d=dpr();
+ c.width=Math.round(cssW*d);c.height=Math.round(cssH*d);
+ c.style.width=cssW+'px';c.style.height=cssH+'px';
+ const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);
+ ctx.clearRect(0,0,cssW,cssH);ctx.fillStyle='#fff';ctx.fillRect(0,0,cssW,cssH);
+ return ctx;
+}
+// Rótulo del eje Y (rotado, a la izquierda) y del eje X (centrado, abajo) — indica qué representa cada eje
+function axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,yLabel,xLabel){
+ ctx.save();ctx.font='bold 10px Arial';ctx.fillStyle='#555';
+ ctx.textAlign='center';
+ ctx.translate(12,padT+chartH/2);ctx.rotate(-Math.PI/2);ctx.fillText(yLabel,0,0);
+ ctx.restore();
+ ctx.save();ctx.font='bold 10px Arial';ctx.fillStyle='#555';ctx.textAlign='center';
+ ctx.fillText(xLabel,padL+chartW/2,cssH-6);
+ ctx.restore();
+}
+function yGrid(ctx,padL,padT,padR,chartW,chartH,maxV,ticks,cssW){
+ ctx.strokeStyle='#e6e6e6';ctx.fillStyle='#777';ctx.font='10px Arial';ctx.textAlign='right';ctx.lineWidth=1;
+ for(let t=0;t<=ticks;t++){
+  const val=maxV/ticks*t,y=padT+chartH-(val/maxV)*chartH;
+  ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(cssW-padR,y);ctx.stroke();
+  ctx.fillText(fmt(val),padL-6,y+3);
+ }
+ ctx.strokeStyle='#333';ctx.beginPath();ctx.moveTo(padL,padT+chartH);ctx.lineTo(cssW-padR,padT+chartH);ctx.stroke();
+ ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,padT+chartH);ctx.stroke();
+}
+// ① Donut de composición vehicular por tipo, con leyenda de % a la derecha
+function drawPie(id,cssW,cssH,labels,values,colors){
+ const ctx=setupCanvas(id,cssW,cssH),total=values.reduce((a,b)=>a+b,0)||1;
+ const cx=175,cy=205,r=145,rInner=80;
+ const idxSorted=values.map((v,i)=>i).sort((a,b)=>values[b]-values[a]);
+ let ang=-Math.PI/2;
+ idxSorted.forEach(i=>{
+  const v=values[i],frac=v/total,a2=ang+frac*Math.PI*2;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,a2);ctx.closePath();
+  ctx.fillStyle=colors[i];ctx.fill();ang=a2;
+ });
+ ctx.beginPath();ctx.arc(cx,cy,rInner,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+ ctx.fillStyle='#2c3e50';ctx.textAlign='center';ctx.font='bold 12px Arial';ctx.fillText('IMD Total',cx,cy-10);
+ ctx.font='bold 17px Arial';ctx.fillText(fmt(total),cx,cy+12);
+ ctx.font='10px Arial';ctx.fillStyle='#888';ctx.fillText('veh/día',cx,cy+28);
+ ctx.textAlign='left';ctx.font='10.5px Arial';
+ let ly=16;const lx=320;
+ idxSorted.forEach(i=>{
+  const v=values[i],pct=100*v/total;
+  ctx.fillStyle=colors[i];ctx.fillRect(lx,ly-8,10,10);
+  ctx.fillStyle='#222';ctx.fillText(labels[i]+'  —  '+pct.toFixed(1)+'%  ('+fmt(v)+')',lx+15,ly);
+  ly+=19.5;
+ });
+}
+// ② Barras de clasificación vehicular IMD (18 tipos, ordenado desc, con etiquetas de valor)
+function drawBarTipo(id,cssW,cssH,labels,values,colors){
+ const padL=55,padR=15,padT=25,padB=140,chartW=cssW-padL-padR,chartH=cssH-padT-padB;
+ const ctx=setupCanvas(id,cssW,cssH);
+ const idxSorted=values.map((v,i)=>i).sort((a,b)=>values[b]-values[a]);
+ const maxV=Math.max(...values)*1.18||1,n=idxSorted.length,gap=chartW/n,bw=gap*0.62;
+ yGrid(ctx,padL,padT,padR,chartW,chartH,maxV,5,cssW);
+ idxSorted.forEach((i,k)=>{
+  const v=values[i],x=padL+gap*k+gap/2,barH=(v/maxV)*chartH,y=padT+chartH-barH;
+  ctx.fillStyle=colors[i];ctx.fillRect(x-bw/2,y,bw,barH);
+  ctx.fillStyle='#222';ctx.font='bold 9px Arial';ctx.textAlign='center';ctx.fillText(fmt(v),x,y-4);
+  ctx.save();ctx.translate(x,padT+chartH+6);ctx.rotate(-Math.PI/3);ctx.textAlign='right';ctx.font='9.5px Arial';ctx.fillStyle='#333';ctx.fillText(labels[i],0,0);ctx.restore();
+ });
+ axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,'Volumen (IMD, veh/día)','Tipo de vehículo');
+}
+// ③ Barras apiladas Entrada/Salida por día
+function drawBarDia(id,cssW,cssH,days,ent,sal){
+ const padL=55,padR=15,padT=35,padB=58,chartW=cssW-padL-padR,chartH=cssH-padT-padB;
+ const ctx=setupCanvas(id,cssW,cssH);
+ const totals=days.map((_,i)=>ent[i]+sal[i]),maxV=Math.max(...totals)*1.18||1;
+ const n=days.length,gap=chartW/n,bw=gap*0.5;
+ yGrid(ctx,padL,padT,padR,chartW,chartH,maxV,5,cssW);
+ days.forEach((d,i)=>{
+  const x=padL+gap*i+gap/2,hE=(ent[i]/maxV)*chartH,hS=(sal[i]/maxV)*chartH;
+  const yE=padT+chartH-hE;
+  ctx.fillStyle=COL_ENT;ctx.fillRect(x-bw/2,yE,bw,hE);
+  const yS=yE-hS;
+  ctx.fillStyle=COL_SAL;ctx.fillRect(x-bw/2,yS,bw,hS);
+  ctx.fillStyle='#222';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText(fmt(ent[i]+sal[i]),x,yS-5);
+  ctx.font='10px Arial';ctx.fillStyle='#333';ctx.fillText(d,x,padT+chartH+16);
+ });
+ ctx.textAlign='left';ctx.font='10px Arial';
+ ctx.fillStyle=COL_ENT;ctx.fillRect(padL,8,10,10);ctx.fillStyle='#222';ctx.fillText('Entrada',padL+14,16);
+ ctx.fillStyle=COL_SAL;ctx.fillRect(padL+80,8,10,10);ctx.fillStyle='#222';ctx.fillText('Salida',padL+94,16);
+ axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,'Volumen (veh/día)','Día de la semana');
+}
+// ④ Curva horaria (línea+área) de variación diaria del tránsito, con Hora de Máxima Demanda resaltada
+function drawLineHora(id,cssW,cssH,hourly,peakIdx,fhp){
+ const padL=55,padR=20,padT=25,padB=48,chartW=cssW-padL-padR,chartH=cssH-padT-padB;
+ const ctx=setupCanvas(id,cssW,cssH);
+ const maxV=Math.max(...hourly)*1.18||1;
+ yGrid(ctx,padL,padT,padR,chartW,chartH,maxV,5,cssW);
+ const stepX=chartW/23;
+ const pts=hourly.map((v,h)=>({x:padL+stepX*h,y:padT+chartH-(v/maxV)*chartH}));
+ // área
+ ctx.beginPath();ctx.moveTo(pts[0].x,padT+chartH);
+ pts.forEach(p=>ctx.lineTo(p.x,p.y));
+ ctx.lineTo(pts[pts.length-1].x,padT+chartH);ctx.closePath();
+ ctx.fillStyle='rgba(46,134,171,0.15)';ctx.fill();
+ // línea
+ ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx.lineTo(p.x,p.y));
+ ctx.strokeStyle=COL_ENT;ctx.lineWidth=2.2;ctx.stroke();
+ // puntos + eje X
+ ctx.font='9.5px Arial';ctx.textAlign='center';
+ pts.forEach((p,h)=>{
+  ctx.fillStyle=h===peakIdx?'#d64545':COL_ENT;ctx.beginPath();ctx.arc(p.x,p.y,h===peakIdx?4.5:2.5,0,Math.PI*2);ctx.fill();
+  if(h%2===0){ctx.fillStyle='#555';ctx.fillText(pad(h),p.x,padT+chartH+14);}
+ });
+ // línea vertical HMD
+ const pk=pts[peakIdx];
+ ctx.strokeStyle='#d64545';ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(pk.x,padT);ctx.lineTo(pk.x,padT+chartH);ctx.stroke();ctx.setLineDash([]);
+ ctx.fillStyle='#d64545';ctx.font='bold 10.5px Arial';
+ ctx.textAlign=peakIdx>17?'right':'left';
+ ctx.fillText('HMD '+pad(peakIdx)+':00-'+pad(peakIdx+1)+':00  |  FHP='+fhp.toFixed(2),peakIdx>17?pk.x-6:pk.x+6,padT+14);
+ axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,'Volumen (veh/15 min)','Hora del día');
+}
+// ⑤ Barras apiladas 100% de composición Ligero/Pesado por día
+function drawBarLP(id,cssW,cssH,days,pctLig,pctPes){
+ const padL=45,padR=15,padT=30,padB=55,chartW=cssW-padL-padR,chartH=cssH-padT-padB;
+ const ctx=setupCanvas(id,cssW,cssH);
+ const n=days.length,gap=chartW/n,bw=gap*0.55;
+ // gridlines cada 20%
+ ctx.strokeStyle='#e6e6e6';ctx.fillStyle='#777';ctx.font='10px Arial';ctx.textAlign='right';
+ for(let t=0;t<=5;t++){const val=t*20,y=padT+chartH-(val/100)*chartH;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(cssW-padR,y);ctx.stroke();ctx.fillText(val+'%',padL-6,y+3);}
+ ctx.strokeStyle='#333';ctx.beginPath();ctx.moveTo(padL,padT+chartH);ctx.lineTo(cssW-padR,padT+chartH);ctx.stroke();
+ days.forEach((d,i)=>{
+  const x=padL+gap*i+gap/2,hL=(pctLig[i]/100)*chartH,hP=(pctPes[i]/100)*chartH;
+  const yL=padT+chartH-hL;
+  ctx.fillStyle=COL_LIG;ctx.fillRect(x-bw/2,yL,bw,hL);
+  ctx.fillStyle='#fff';ctx.font='bold 10px Arial';ctx.textAlign='center';if(hL>14)ctx.fillText(pctLig[i].toFixed(0)+'%',x,yL+hL/2+3);
+  const yP=yL-hP;
+  ctx.fillStyle=COL_PES;ctx.fillRect(x-bw/2,yP,bw,hP);
+  ctx.fillStyle='#fff';if(hP>14)ctx.fillText(pctPes[i].toFixed(0)+'%',x,yP+hP/2+3);
+  ctx.fillStyle='#333';ctx.font='10px Arial';ctx.fillText(d,x,padT+chartH+16);
+ });
+ ctx.textAlign='left';ctx.font='10px Arial';
+ ctx.fillStyle=COL_LIG;ctx.fillRect(padL,8,10,10);ctx.fillStyle='#222';ctx.fillText('Ligeros',padL+14,16);
+ ctx.fillStyle=COL_PES;ctx.fillRect(padL+70,8,10,10);ctx.fillStyle='#222';ctx.fillText('Pesados',padL+84,16);
+ axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,'Composición (%)','Día de la semana');
+}
+// ⑥ Barras genéricas de un valor por estación (Resumen Global): conteo total o IMDa
+function drawBarEstacion(id,cssW,cssH,labels,values,yLabel){
+ const padL=55,padR=15,padT=25,padB=48,chartW=cssW-padL-padR,chartH=cssH-padT-padB;
+ const ctx=setupCanvas(id,cssW,cssH);
+ const maxV=Math.max(...values)*1.18||1,n=labels.length,gap=chartW/n,bw=gap*0.5;
+ yGrid(ctx,padL,padT,padR,chartW,chartH,maxV,5,cssW);
+ labels.forEach((lab,i)=>{
+  const v=values[i],x=padL+gap*i+gap/2,barH=(v/maxV)*chartH,y=padT+chartH-barH;
+  ctx.fillStyle=COL_ENT;ctx.fillRect(x-bw/2,y,bw,barH);
+  ctx.fillStyle='#222';ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.fillText(fmt(v),x,y-5);
+  ctx.font='10px Arial';ctx.fillStyle='#333';ctx.fillText(lab,x,padT+chartH+16);
+ });
+ axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,yLabel||'Vehículos contabilizados','Estación');
+}
+function renderGraficos(){
+ const estIdx=+gEst.value,meta=stationMeta[estIdx],indicador=gInd.value;
+ gMeta.textContent=(meta.fecha?'Semana desde '+meta.fecha:'Sin fecha registrada')+(meta.peaje?' | Peaje ref: '+meta.peaje:'')+' | FC Lig: '+meta.fcLig.toFixed(4)+' | FC Pes: '+meta.fcPes.toFixed(4);
+ const typeVals=indicador==='imda'?imdaPorTipo(estIdx):weeklyIMDs(estIdx);
+ const cls=classify(typeVals);
+ const profile=weeklyAvgProfile(estIdx),pk=peakFromProfile(profile);
+ const qa=qaCheck(estIdx,null);
+ gKpi.innerHTML=
+  '<div>'+(indicador==='imda'?'IMDa':'IMDs')+' Total<b>'+fmt(cls.total)+'</b></div>'+
+  '<div>Vehículos Ligeros<b>'+fmt(cls.lig)+' ('+fmt(100*cls.lig/cls.total)+'%)</b></div>'+
+  '<div>Vehículos Pesados<b>'+fmt(cls.pes)+' ('+fmt(100*cls.pes/cls.total)+'%)</b></div>'+
+  '<div>Hora Máxima Demanda<b>'+pad(pk.hpIdx)+':00-'+pad(pk.hpIdx+1)+':00</b></div>'+
+  '<div>Factor Hora Punta<b>'+pk.fhp.toFixed(2)+'</b></div>'+
+  '<div>Consistencia E/S semanal<b>'+qaBadgeHtml(qa.diff)+'</b></div>';
+ drawPie('cPie',580,400,VT,typeVals,VT_COLORS);
+ drawBarTipo('cBarTipo',900,460,VT,typeVals,VT_COLORS);
+ const entArr=[],salArr=[],pctLig=[],pctPes=[];
+ for(let d=0;d<7;d++){
+  const t=dailyTotalsSentido(estIdx,d);
+  entArr.push(t.ent.reduce((a,b)=>a+b,0));salArr.push(t.sal.reduce((a,b)=>a+b,0));
+  const dt=dailyTotals(estIdx,d),c=classify(dt);
+  pctLig.push(100*c.lig/c.total);pctPes.push(100*c.pes/c.total);
+ }
+ const diasLblG=diasDesde(meta.fecha);
+ drawBarDia('cBarDia',540,415,diasLblG,entArr,salArr);
+ const hourly=[];for(let h=0;h<24;h++){let v=0;for(let q=0;q<4;q++)v+=profile[h*4+q];hourly.push(v);}
+ drawLineHora('cLineHora',760,415,hourly,pk.hpIdx,pk.fhp);
+ drawBarLP('cBarLP',900,400,diasLblG,pctLig,pctPes);
+}
+[gEst,gInd].forEach(s=>s.addEventListener('change',renderGraficos));
+async function copyCanvasImage(canvasId,btn){
+ const canvas=document.getElementById(canvasId),orig=btn.innerHTML,origTitle=btn.title;
+ try{
+  const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+  if(!navigator.clipboard||!window.ClipboardItem)throw new Error('sin soporte');
+  await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+  btn.innerHTML='<span class="ms" aria-hidden="true">check</span>';btn.title='Copiado — pégalo con Ctrl+V';btn.classList.add('success');
+ }catch(err){
+  const url=canvas.toDataURL('image/png'),a=document.createElement('a');
+  a.href=url;a.download=canvasId+'.png';document.body.appendChild(a);a.click();a.remove();
+  btn.innerHTML='<span class="ms" aria-hidden="true">download</span>';btn.title='Descargado (PNG)';btn.classList.add('success');
+ }
+ setTimeout(()=>{btn.innerHTML=orig;btn.title=origTitle;btn.classList.remove('success');},2000);
+}
+document.querySelectorAll('[data-copy]').forEach(btn=>btn.addEventListener('click',()=>copyCanvasImage(btn.dataset.copy,btn)));
+
+// ---- GESTIÓN DINÁMICA DE ESTACIONES (añadir / quitar desde "Datos de Estaciones") ----
+function refreshEstacionSelects(){
+ [est,imdEst,resEst,proyEst,gEst].forEach(sel=>{
+  const prev=+sel.value||0;
+  sel.innerHTML='';
+  ESTACIONES.forEach((e,i)=>sel.add(new Option(e,i)));
+  sel.value=Math.min(prev,ESTACIONES.length-1);
+ });
+}
+function refreshAllViews(){
+ render();renderMetaTabla();
+ const activeBtn=document.querySelector('.tabbtn.active'),t=activeBtn&&activeBtn.dataset.t;
+ if(t==='imd')renderIMD();
+ if(t==='resumen')renderResumen();
+ if(t==='global')renderGlobal();
+ if(t==='graficos')renderGraficos();
+ if(t==='proyeccion')renderProy();
+}
+function addEstacion(){
+ const i=ESTACIONES.length;
+ ESTACIONES.push('Estación '+(i+1));
+ const m=makeStationMeta();
+ if(i>0){
+  // hereda fecha/peaje/departamento de la Estación 1 (igual que el resto de estaciones "automáticas")
+  const m0=stationMeta[0];
+  m.fecha=m0.fecha;m.peaje=m0.peaje;m.departamento=m0.departamento;
+ }
+ stationMeta.push(m);
+ recalcFC(i);recalcTasa(i);
+ refreshEstacionSelects();
+ refreshAllViews();
+ showDatosMsg('✅ "'+ESTACIONES[i]+'" añadida.','ok');
+}
+async function removeEstacion(i){
+ if(ESTACIONES.length<=1||i<=0)return;
+ const ok=await showConfirmDialog({
+  title:'Eliminar estación',
+  message:'¿Eliminar <b>"'+ESTACIONES[i]+'"</b>? Se perderán sus datos de conteo.',
+  confirmText:'Eliminar',
+  confirmColor:'#d64545'
+ });
+ if(!ok)return;
+ ESTACIONES.splice(i,1);
+ stationMeta.splice(i,1);
+ // reindexa el conteo vehicular (store) de las estaciones que quedan tras la eliminada
+ const newStore={};
+ Object.keys(store).forEach(k=>{
+  const parts=k.split('_'),si=+parts[0],di=parts[1];
+  if(si===i)return;
+  const ni=si>i?si-1:si;
+  newStore[ni+'_'+di]=store[k];
+ });
+ for(const k in store)delete store[k];
+ Object.assign(store,newStore);
+ refreshEstacionSelects();
+ refreshAllViews();
+ showDatosMsg('🗑 Estación eliminada.','ok');
+}
+
+render();
+renderMetaTabla();
+
+// ---- REDIBUJADO DE GRÁFICOS AL CAMBIAR EL ZOOM DEL NAVEGADOR ----
+// Los <canvas> se dibujan a una resolución fija (según devicePixelRatio) en el momento del render.
+// Si el usuario hace zoom con el navegador después, esa resolución fija queda desactualizada y el
+// navegador estira el bitmap ya dibujado -> se ve borroso. Aquí detectamos cambios de zoom/DPR y
+// volvemos a dibujar los gráficos (si esa pestaña está activa) a la resolución correcta.
+(function watchZoomAndRedraw(){
+ let lastDpr=dpr();
+ function redrawIfNeeded(){
+  const d=dpr();
+  if(d===lastDpr)return;
+  lastDpr=d;
+  const activeBtn=document.querySelector('.tabbtn.active'),t=activeBtn&&activeBtn.dataset.t;
+  if(t==='graficos')renderGraficos();
+  if(t==='global')renderBarEstacion();
+ }
+ let rTimer;
+ window.addEventListener('resize',()=>{clearTimeout(rTimer);rTimer=setTimeout(redrawIfNeeded,150);});
+ if(window.matchMedia){
+  const attach=()=>{
+   const mq=window.matchMedia('(resolution: '+dpr()+'dppx)');
+   const onChange=()=>{redrawIfNeeded();mq.removeEventListener('change',onChange);attach();};
+   mq.addEventListener('change',onChange);
+  };
+  attach();
+ }
+})();
+</script>
+</body></html>
+
+
 
