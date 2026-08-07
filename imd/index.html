@@ -115,8 +115,8 @@ th,td{border:1px solid var(--color-surface-variant);text-align:center;padding:5p
 th{background:var(--color-primary);color:var(--color-on-primary);font-size:11px;font-weight:500;font-family:var(--font-display)}
 td[contenteditable]{outline:none}
 td[contenteditable]:focus{background:var(--color-primary-container)}
-tr.entrada td{background:oklch(from var(--color-do) 96% 0.03 h)}
-tr.salida td{background:oklch(from var(--color-dont) 96% 0.02 h)}
+tr.entrada td{background:var(--color-background)}
+tr.salida td{background:var(--color-surface-2)}
 .hora{font-weight:600;background:var(--color-surface-2)!important}
 .totrow td{font-weight:600;background:var(--color-secondary-container)!important}
 .tipo{font-weight:600;width:30px}
@@ -131,7 +131,7 @@ tr.salida td{background:oklch(from var(--color-dont) 96% 0.02 h)}
 .ok{background:var(--color-do)}.warn{background:var(--color-warn)}.bad{background:var(--color-dont)}
 
 /* ─── CHARTS ──────────────────────────────────────────────────────────── */
-.chartsGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chartsGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 @media (max-width:1100px){.chartsGrid{grid-template-columns:1fr}}
 .chartCard{position:relative;justify-self:start;max-width:100%;background:var(--color-surface-0);border:1px solid var(--color-surface-variant);border-radius:var(--shape-large);padding:14px;box-shadow:var(--elevation-1)}
 .chartCard.full{grid-column:1/-1}
@@ -244,7 +244,6 @@ html{scrollbar-width:thin;scrollbar-color:var(--color-outline) transparent}
     <button class="tabbtn" data-t="imd" role="tab" aria-selected="false">IMD</button>
     <button class="tabbtn" data-t="resumen" role="tab" aria-selected="false">Resumen por Estación</button>
     <button class="tabbtn" data-t="global" role="tab" aria-selected="false">Resumen Global</button>
-    <button class="tabbtn" data-t="graficos" role="tab" aria-selected="false">Gráficos</button>
     <button class="tabbtn" data-t="proyeccion" role="tab" aria-selected="false">Proyección de Tráfico</button>
   </nav>
 
@@ -260,7 +259,6 @@ html{scrollbar-width:thin;scrollbar-color:var(--color-outline) transparent}
       <button class="mobile-menu-item" role="option" data-t="imd" aria-selected="false">IMD<span class="ms menu-check" aria-hidden="true">check</span></button>
       <button class="mobile-menu-item" role="option" data-t="resumen" aria-selected="false">Resumen por Estación<span class="ms menu-check" aria-hidden="true">check</span></button>
       <button class="mobile-menu-item" role="option" data-t="global" aria-selected="false">Resumen Global<span class="ms menu-check" aria-hidden="true">check</span></button>
-      <button class="mobile-menu-item" role="option" data-t="graficos" aria-selected="false">Gráficos<span class="ms menu-check" aria-hidden="true">check</span></button>
       <button class="mobile-menu-item" role="option" data-t="proyeccion" aria-selected="false">Proyección de Tráfico<span class="ms menu-check" aria-hidden="true">check</span></button>
     </div>
   </div>
@@ -273,8 +271,8 @@ html{scrollbar-width:thin;scrollbar-color:var(--color-outline) transparent}
 <div class="fab-speeddial" id="fabSpeeddial">
 <span id="datosMsg"></span>
 <div class="fab-options">
-<button type="button" id="btnExportar" class="fab-option"><span class="ms" aria-hidden="true">upload_file</span><span class="label">Exportar datos</span></button>
 <button type="button" id="btnImportar" class="fab-option"><span class="ms" aria-hidden="true">download</span><span class="label">Importar datos</span></button>
+<button type="button" id="btnExportar" class="fab-option"><span class="ms" aria-hidden="true">upload_file</span><span class="label">Exportar datos</span></button>
 </div>
 <button type="button" class="fab-main" id="fabMainBtn" aria-haspopup="true" aria-expanded="false" aria-label="Opciones de datos">
 <span class="ms fab-icon-open" aria-hidden="true">storage</span>
@@ -304,10 +302,27 @@ Intervalo: <select id="intv">
 <div class="bar">
 Estación: <select id="imdEst"></select>
 Sentido: <select id="imdVista"><option value="ambos">Ambos (E+S)</option><option value="es">Entrada y Salida</option></select>
+Indicador (gráficos): <select id="imdInd"><option value="imda">IMDa (anual, proyectado con FC)</option><option value="imds">IMDs (semanal, sin FC)</option></select>
 <span id="imdMeta" style="color:#555"></span>
 </div>
 <div class="kpi" id="imdKpi"></div>
 <div class="wrap"><table id="imdDetalle"></table></div>
+<div class="chartsGrid">
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cPie" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>① Composición Vehicular por Tipo</h4><span class="sub">% de participación de cada tipo de vehículo sobre el IMD total</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cPie"></canvas></div>
+ </div>
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarTipo" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>② Clasificación Vehicular IMD</h4><span class="sub">Volumen (IMD) por tipo de vehículo, ordenado de mayor a menor</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarTipo"></canvas></div>
+ </div>
+</div>
 </section>
 
 <section id="tab-resumen" class="tabpanel">
@@ -317,14 +332,55 @@ Sentido: <select id="resVista"><option value="ambos">Ambos (E+S)</option><option
 </div>
 <div class="kpi" id="resKpi"></div>
 <div class="wrap"><table id="resComposicion"></table></div>
+<div class="chartsGrid">
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarDia" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>① Vehículos por Día</h4><span class="sub">Volumen diario (24h) de la semana de conteo, por Entrada y Salida</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarDia"></canvas></div>
+ </div>
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarLP" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>② Ligeros vs. Pesados por Día</h4><span class="sub">Evolución de la composición vehicular (%) día a día — útil para detectar patrones de tráfico de carga</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarLP"></canvas></div>
+ </div>
+</div>
+<div class="chartsGrid">
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cPieVol" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>③ Composición Vehicular por Tipo</h4><span class="sub">% de participación de cada tipo de vehículo sobre el volumen total de la estación</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cPieVol"></canvas></div>
+ </div>
+ <div class="chartCard">
+  <button class="copyBtn" data-copy="cBarTipoVol" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>④ Clasificación Vehicular por Volumen</h4><span class="sub">Volumen total (veh/día, promedio semanal) por tipo de vehículo, ordenado de mayor a menor</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cBarTipoVol"></canvas></div>
+ </div>
+</div>
 <div class="wrap"><table id="resHoraria"></table></div>
+<div class="chartsGrid">
+ <div class="chartCard full">
+  <button class="copyBtn" data-copy="cLineHora" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
+  <div class="chartHead">
+   <div><h4>⑤ Curva Horaria de Tránsito (Variación Diaria)</h4><span class="sub">Perfil promedio semanal (24h) — identifica la Hora de Máxima Demanda (HMD)</span></div>
+  </div>
+  <div class="chartWrap"><canvas id="cLineHora"></canvas></div>
+ </div>
+</div>
 </section>
 
 <section id="tab-global" class="tabpanel">
 <div class="bar">Sentido: <select id="globalVista"><option value="ambos">Ambos (E+S)</option><option value="es">Entrada y Salida</option></select></div>
-<div class="wrap"><table id="globalTabla"></table></div>
 <div class="wrap"><table id="globalPorEstacion"></table></div>
 <div class="wrap"><table id="globalConteo"></table></div>
+<div class="wrap"><table id="globalTabla"></table></div>
 <div class="nota">Cuadro resumen por tipo de vehículo y sentido: IMDs (semanal) e IMDa (anual, IMDs × FCE) de cada estación, según el FC vigente en "Datos de Estaciones" para cada una. FCE = FC promedio de las estaciones con peaje asignado (ligero para filas de vehículos ligeros, pesado para pesados).</div>
 <div class="wrap"><table id="globalResumen"></table></div>
 <div class="chartsGrid">
@@ -341,52 +397,6 @@ Sentido: <select id="resVista"><option value="ambos">Ambos (E+S)</option><option
    <div><h4>IMDa por Estación</h4><span class="sub">Índice Medio Diario anual (proyectado con FC) de cada estación</span></div>
   </div>
   <div class="chartWrap"><canvas id="cBarEstacionIMDa"></canvas></div>
- </div>
-</div>
-</section>
-
-<section id="tab-graficos" class="tabpanel">
-<div class="bar">
-Estación: <select id="gEst"></select>
-Indicador: <select id="gInd"><option value="imda">IMDa (anual, proyectado con FC)</option><option value="imds">IMDs (semanal, sin FC)</option></select>
-<span id="gMeta" style="color:#555"></span>
-</div>
-<div class="kpi" id="gKpi"></div>
-<div class="chartsGrid">
- <div class="chartCard">
-  <button class="copyBtn" data-copy="cPie" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
-  <div class="chartHead">
-   <div><h4>① Composición Vehicular por Tipo</h4><span class="sub">% de participación de cada tipo de vehículo sobre el IMD total</span></div>
-  </div>
-  <div class="chartWrap"><canvas id="cPie"></canvas></div>
- </div>
- <div class="chartCard">
-  <button class="copyBtn" data-copy="cBarTipo" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
-  <div class="chartHead">
-   <div><h4>② Clasificación Vehicular IMD</h4><span class="sub">Volumen (IMD) por tipo de vehículo, ordenado de mayor a menor</span></div>
-  </div>
-  <div class="chartWrap"><canvas id="cBarTipo"></canvas></div>
- </div>
- <div class="chartCard">
-  <button class="copyBtn" data-copy="cBarDia" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
-  <div class="chartHead">
-   <div><h4>③ Vehículos por Día</h4><span class="sub">Volumen diario (24h) de la semana de conteo, por Entrada y Salida</span></div>
-  </div>
-  <div class="chartWrap"><canvas id="cBarDia"></canvas></div>
- </div>
- <div class="chartCard">
-  <button class="copyBtn" data-copy="cLineHora" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
-  <div class="chartHead">
-   <div><h4>④ Curva Horaria de Tránsito (Variación Diaria)</h4><span class="sub">Perfil promedio semanal (24h) — identifica la Hora de Máxima Demanda (HMD)</span></div>
-  </div>
-  <div class="chartWrap"><canvas id="cLineHora"></canvas></div>
- </div>
- <div class="chartCard full">
-  <button class="copyBtn" data-copy="cBarLP" title="Copiar imagen"><span class="ms" aria-hidden="true">content_copy</span></button>
-  <div class="chartHead">
-   <div><h4>⑤ Ligeros vs. Pesados por Día</h4><span class="sub">Evolución de la composición vehicular (%) día a día — útil para detectar patrones de tráfico de carga</span></div>
-  </div>
-  <div class="chartWrap"><canvas id="cBarLP"></canvas></div>
  </div>
 </div>
 </section>
@@ -567,7 +577,6 @@ document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click',()=>{
  if(b.dataset.t==='imd')renderIMD();
  if(b.dataset.t==='resumen')renderResumen();
  if(b.dataset.t==='global')renderGlobal();
- if(b.dataset.t==='graficos')renderGraficos();
  if(b.dataset.t==='proyeccion')renderProy();
 }));
 
@@ -797,7 +806,6 @@ function importarDatos(file){
    if(t==='imd')renderIMD();
    if(t==='resumen')renderResumen();
    if(t==='global')renderGlobal();
-   if(t==='graficos')renderGraficos();
    if(t==='proyeccion')renderProy();
    showDatosMsg('✅ Datos cargados desde "'+file.name+'" ('+nEstArchivo+' estación(es); '+(data.exportado?'exportado '+new Date(data.exportado).toLocaleString('es-PE'):'sin fecha')+').','ok');
   }catch(err){
@@ -817,7 +825,7 @@ importFileInput.addEventListener('change',e=>{
 });
 
 // ---- TAB IMD ----
-const imdEst=document.getElementById('imdEst'),imdVista=document.getElementById('imdVista'),imdMeta=document.getElementById('imdMeta');
+const imdEst=document.getElementById('imdEst'),imdVista=document.getElementById('imdVista'),imdInd=document.getElementById('imdInd'),imdMeta=document.getElementById('imdMeta');
 ESTACIONES.forEach((e,i)=>imdEst.add(new Option(e,i)));
 function renderIMD(){
  const estIdx=+imdEst.value,meta=stationMeta[estIdx],es=imdVista.value==='es';
@@ -869,8 +877,13 @@ function renderIMD(){
   '<div>IMDa Total<b>'+fmt(clsA.total)+'</b></div>'+
   '<div>Vehículos Ligeros<b>'+fmt(clsA.lig)+' ('+fmt(100*clsA.lig/clsA.total)+'%)</b></div>'+
   '<div>Vehículos Pesados<b>'+fmt(clsA.pes)+' ('+fmt(100*clsA.pes/clsA.total)+'%)</b></div>';
+ // Gráficos ① y ②: composición y clasificación vehicular, según indicador elegido (IMDa/IMDs)
+ const indicador=document.getElementById('imdInd').value;
+ const typeValsChart=indicador==='imda'?imdaPorTipo(estIdx):weeklyIMDs(estIdx);
+ drawPie('cPie',580,400,VT,typeValsChart,VT_COLORS,indicador==='imda'?'IMDa Total':'IMDs Total');
+ drawBarTipo('cBarTipo',900,460,VT,typeValsChart,VT_COLORS,indicador==='imda'?'Volumen (IMDa, veh/día)':'Volumen (IMDs, veh/día)');
 }
-[imdEst,imdVista].forEach(s=>s.addEventListener('change',renderIMD));
+[imdEst,imdVista,imdInd].forEach(s=>s.addEventListener('change',renderIMD));
 
 // ---- TAB RESUMEN ----
 const resEst=document.getElementById('resEst'),resVista=document.getElementById('resVista');
@@ -941,6 +954,20 @@ function renderResumen(){
   '<div>Volumen Hora Punta (prom. diario)<b>'+fmt(pk.volHora)+'</b></div>'+
   '<div>Factor Hora Punta (FHP)<b>'+pk.fhp.toFixed(2)+'</b></div>'+
   '<div>Consistencia E/S (semanal)<b>'+qaBadgeHtml(qa.diff)+'</b></div>';
+ // ① Vehículos por Día (Entrada/Salida) y ② Ligeros vs. Pesados por Día
+ const entArrDay=dayTotalsSentido.map(t=>t.ent.reduce((a,b)=>a+b,0));
+ const salArrDay=dayTotalsSentido.map(t=>t.sal.reduce((a,b)=>a+b,0));
+ const pctLigDay=[],pctPesDay=[];
+ dayTotals.forEach(t=>{const c=classify(t);pctLigDay.push(100*c.lig/c.total);pctPesDay.push(100*c.pes/c.total);});
+ drawBarDia('cBarDia',540,415,diasLbl,entArrDay,salArrDay);
+ drawBarLP('cBarLP',900,400,diasLbl,pctLigDay,pctPesDay);
+ // ③ Composición Vehicular por Tipo y ④ Clasificación Vehicular por Volumen (volumen total de la estación, sin FC)
+ const totalesTipo=weeklyIMDs(estIdx);
+ drawPie('cPieVol',580,400,VT,totalesTipo,VT_COLORS,'Volumen Total');
+ drawBarTipo('cBarTipoVol',900,460,VT,totalesTipo,VT_COLORS,'Volumen (veh/día)');
+ // ⑤ Curva Horaria de Tránsito (Variación Diaria)
+ const hourly=[];for(let h=0;h<24;h++){let v=0;for(let q=0;q<4;q++)v+=profile[h*4+q];hourly.push(v);}
+ drawLineHora('cLineHora',760,415,hourly,pk.hpIdx,pk.fhp);
 }
 [resEst,resVista].forEach(s=>s.addEventListener('change',renderResumen));
 
@@ -973,14 +1000,14 @@ function renderGlobal(){
     '<td>'+qaBadgeHtml(qa.diff)+'</td></tr>';
   }
  });
- document.getElementById('globalTabla').innerHTML=h+body;
+ document.getElementById('globalTabla').innerHTML='<caption style="caption-side:top;font-weight:bold;padding:4px">Indicadores IMDa por estación (clasificación vehicular, hora punta y FHP)</caption>'+h+body;
  renderGlobalPorEstacion(es);
  renderGlobalConteo(es);
  renderGlobalResumen();
  renderBarEstacion();
 }
 // Cuadro: resumen general por estación (fechas de conteo, peaje, conteo total y % Ligero/Pesado)
-// Respeta el selector "Sentido" igual que la tabla 1 (Ambos E+S combinado, o filas separadas Entrada/Salida)
+// Respeta el selector "Sentido" igual que las demás tablas de esta pestaña
 function renderGlobalPorEstacion(es){
  let h='<tr><th>Estación</th>'+(es?'<th>Sentido</th>':'')+'<th>Fecha Inicio Conteo</th><th>Fecha Final Conteo</th><th>Peaje Ref.</th><th>Conteo Total</th><th>% Ligero</th><th>% Pesado</th></tr>',body='';
  ESTACIONES.forEach((nombre,i)=>{
@@ -1148,12 +1175,10 @@ function renderProy(){
  document.getElementById('proyTablaTipo').innerHTML=h2+body2;
 }
 
-// ---- TAB GRÁFICOS ----
+// ---- FUNCIONES DE DIBUJO DE GRÁFICOS (usadas en pestañas IMD y Resumen por Estación) ----
 // Paleta: 6 tonos azul/verde para vehículos ligeros (LIG_IDX, incluye Micro) + 14 tonos naranja/rojo para pesados (PES_IDX)
 const VT_COLORS=['#1F77B4','#3AA6B9','#17A398','#2ECC71','#5DADE2','#48C9B0','#F39C12','#E67E22','#E74C3C','#C0392B','#D35400','#A04000','#EB984E','#CB4335','#B03A2E','#943126','#78281F','#6E2C00','#A93226','#616A6B'];
 const COL_ENT='#2E86AB',COL_SAL='#E67E22',COL_LIG='#2ECC71',COL_PES='#E74C3C';
-const gEst=document.getElementById('gEst'),gInd=document.getElementById('gInd'),gMeta=document.getElementById('gMeta'),gKpi=document.getElementById('gKpi');
-ESTACIONES.forEach((e,i)=>gEst.add(new Option(e,i)));
 // Se sobre-renderiza a un mínimo de 3.5x la resolución real de pantalla (no solo el devicePixelRatio
 // tal cual), para que al hacer zoom con el trackpad/gestos (o zoom de página) el canvas tenga pixeles
 // de sobra y no se vea borroso/pixelado al acercarse.
@@ -1187,7 +1212,7 @@ function yGrid(ctx,padL,padT,padR,chartW,chartH,maxV,ticks,cssW){
  ctx.beginPath();ctx.moveTo(padL,padT);ctx.lineTo(padL,padT+chartH);ctx.stroke();
 }
 // ① Donut de composición vehicular por tipo, con leyenda de % a la derecha
-function drawPie(id,cssW,cssH,labels,values,colors){
+function drawPie(id,cssW,cssH,labels,values,colors,centerLabel){
  const ctx=setupCanvas(id,cssW,cssH),total=values.reduce((a,b)=>a+b,0)||1;
  const cx=175,cy=205,r=145,rInner=80;
  const idxSorted=values.map((v,i)=>i).sort((a,b)=>values[b]-values[a]);
@@ -1198,7 +1223,7 @@ function drawPie(id,cssW,cssH,labels,values,colors){
   ctx.fillStyle=colors[i];ctx.fill();ang=a2;
  });
  ctx.beginPath();ctx.arc(cx,cy,rInner,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
- ctx.fillStyle='#2c3e50';ctx.textAlign='center';ctx.font='bold 12px Arial';ctx.fillText('IMD Total',cx,cy-10);
+ ctx.fillStyle='#2c3e50';ctx.textAlign='center';ctx.font='bold 12px Arial';ctx.fillText(centerLabel||'IMD Total',cx,cy-10);
  ctx.font='bold 17px Arial';ctx.fillText(fmt(total),cx,cy+12);
  ctx.font='10px Arial';ctx.fillStyle='#888';ctx.fillText('veh/día',cx,cy+28);
  ctx.textAlign='left';ctx.font='10.5px Arial';
@@ -1211,7 +1236,7 @@ function drawPie(id,cssW,cssH,labels,values,colors){
  });
 }
 // ② Barras de clasificación vehicular IMD (18 tipos, ordenado desc, con etiquetas de valor)
-function drawBarTipo(id,cssW,cssH,labels,values,colors){
+function drawBarTipo(id,cssW,cssH,labels,values,colors,yLabel){
  const padL=55,padR=15,padT=25,padB=140,chartW=cssW-padL-padR,chartH=cssH-padT-padB;
  const ctx=setupCanvas(id,cssW,cssH);
  const idxSorted=values.map((v,i)=>i).sort((a,b)=>values[b]-values[a]);
@@ -1223,7 +1248,7 @@ function drawBarTipo(id,cssW,cssH,labels,values,colors){
   ctx.fillStyle='#222';ctx.font='bold 9px Arial';ctx.textAlign='center';ctx.fillText(fmt(v),x,y-4);
   ctx.save();ctx.translate(x,padT+chartH+6);ctx.rotate(-Math.PI/3);ctx.textAlign='right';ctx.font='9.5px Arial';ctx.fillStyle='#333';ctx.fillText(labels[i],0,0);ctx.restore();
  });
- axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,'Volumen (IMD, veh/día)','Tipo de vehículo');
+ axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,yLabel||'Volumen (IMD, veh/día)','Tipo de vehículo');
 }
 // ③ Barras apiladas Entrada/Salida por día
 function drawBarDia(id,cssW,cssH,days,ent,sal){
@@ -1314,36 +1339,6 @@ function drawBarEstacion(id,cssW,cssH,labels,values,yLabel){
  });
  axisTitles(ctx,cssW,cssH,padL,padT,chartW,chartH,padB,yLabel||'Vehículos contabilizados','Estación');
 }
-function renderGraficos(){
- const estIdx=+gEst.value,meta=stationMeta[estIdx],indicador=gInd.value;
- gMeta.textContent=(meta.fecha?'Semana desde '+meta.fecha:'Sin fecha registrada')+(meta.peaje?' | Peaje ref: '+meta.peaje:'')+' | FC Lig: '+meta.fcLig.toFixed(4)+' | FC Pes: '+meta.fcPes.toFixed(4);
- const typeVals=indicador==='imda'?imdaPorTipo(estIdx):weeklyIMDs(estIdx);
- const cls=classify(typeVals);
- const profile=weeklyAvgProfile(estIdx),pk=peakFromProfile(profile);
- const qa=qaCheck(estIdx,null);
- gKpi.innerHTML=
-  '<div>'+(indicador==='imda'?'IMDa':'IMDs')+' Total<b>'+fmt(cls.total)+'</b></div>'+
-  '<div>Vehículos Ligeros<b>'+fmt(cls.lig)+' ('+fmt(100*cls.lig/cls.total)+'%)</b></div>'+
-  '<div>Vehículos Pesados<b>'+fmt(cls.pes)+' ('+fmt(100*cls.pes/cls.total)+'%)</b></div>'+
-  '<div>Hora Máxima Demanda<b>'+pad(pk.hpIdx)+':00-'+pad(pk.hpIdx+1)+':00</b></div>'+
-  '<div>Factor Hora Punta<b>'+pk.fhp.toFixed(2)+'</b></div>'+
-  '<div>Consistencia E/S semanal<b>'+qaBadgeHtml(qa.diff)+'</b></div>';
- drawPie('cPie',580,400,VT,typeVals,VT_COLORS);
- drawBarTipo('cBarTipo',900,460,VT,typeVals,VT_COLORS);
- const entArr=[],salArr=[],pctLig=[],pctPes=[];
- for(let d=0;d<7;d++){
-  const t=dailyTotalsSentido(estIdx,d);
-  entArr.push(t.ent.reduce((a,b)=>a+b,0));salArr.push(t.sal.reduce((a,b)=>a+b,0));
-  const dt=dailyTotals(estIdx,d),c=classify(dt);
-  pctLig.push(100*c.lig/c.total);pctPes.push(100*c.pes/c.total);
- }
- const diasLblG=diasDesde(meta.fecha);
- drawBarDia('cBarDia',540,415,diasLblG,entArr,salArr);
- const hourly=[];for(let h=0;h<24;h++){let v=0;for(let q=0;q<4;q++)v+=profile[h*4+q];hourly.push(v);}
- drawLineHora('cLineHora',760,415,hourly,pk.hpIdx,pk.fhp);
- drawBarLP('cBarLP',900,400,diasLblG,pctLig,pctPes);
-}
-[gEst,gInd].forEach(s=>s.addEventListener('change',renderGraficos));
 async function copyCanvasImage(canvasId,btn){
  const canvas=document.getElementById(canvasId),orig=btn.innerHTML,origTitle=btn.title;
  try{
@@ -1362,7 +1357,7 @@ document.querySelectorAll('[data-copy]').forEach(btn=>btn.addEventListener('clic
 
 // ---- GESTIÓN DINÁMICA DE ESTACIONES (añadir / quitar desde "Datos de Estaciones") ----
 function refreshEstacionSelects(){
- [est,imdEst,resEst,proyEst,gEst].forEach(sel=>{
+ [est,imdEst,resEst,proyEst].forEach(sel=>{
   const prev=+sel.value||0;
   sel.innerHTML='';
   ESTACIONES.forEach((e,i)=>sel.add(new Option(e,i)));
@@ -1375,7 +1370,6 @@ function refreshAllViews(){
  if(t==='imd')renderIMD();
  if(t==='resumen')renderResumen();
  if(t==='global')renderGlobal();
- if(t==='graficos')renderGraficos();
  if(t==='proyeccion')renderProy();
 }
 function addEstacion(){
@@ -1434,7 +1428,8 @@ renderMetaTabla();
   if(d===lastDpr)return;
   lastDpr=d;
   const activeBtn=document.querySelector('.tabbtn.active'),t=activeBtn&&activeBtn.dataset.t;
-  if(t==='graficos')renderGraficos();
+  if(t==='imd')renderIMD();
+  if(t==='resumen')renderResumen();
   if(t==='global')renderBarEstacion();
  }
  let rTimer;
@@ -1450,6 +1445,7 @@ renderMetaTabla();
 })();
 </script>
 </body></html>
+
 
 
 
