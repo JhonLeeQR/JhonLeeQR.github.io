@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis de Tránsito Vehicular — Informe Técnico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c18;
+  --surface:#0e1425;
+  --surface2:#131929;
+  --border:#1e2d50;
+  --text:#e8edf5;
+  --muted:#7a8aaa;
+  --accent:#00e5ff;
+  --accent2:#7cfc6e;
+  --accent3:#ffd166;
+  --accent4:#ff6b35;
+  --accent5:#c084fc;
+  --ida:#00e5ff;
+  --vuelta:#ff6b35;
+  --ambos:#ffd166;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.6;min-height:100vh}
+
+/* ── HEADER ── */
+header{background:linear-gradient(135deg,#080c18 0%,#0d1530 60%,#111c3a 100%);border-bottom:1px solid var(--border);padding:48px 40px 36px;position:relative;overflow:hidden}
+header::before{content:'';position:absolute;top:-60px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(0,229,255,0.06) 0%,transparent 70%);pointer-events:none}
+.header-tag{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;opacity:.8}
+header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,60px);letter-spacing:3px;color:var(--text);line-height:1.05;margin-bottom:10px}
+header h1 span{color:var(--accent)}
+.header-sub{color:var(--muted);font-size:15px;margin-bottom:20px}
+.header-meta{display:flex;flex-wrap:wrap;gap:8px}
+.meta-pill{font-family:'DM Mono',monospace;font-size:11px;padding:4px 12px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);border-radius:20px;color:var(--accent)}
+
+/* ── PASTE SECTION ── */
+.paste-section{background:linear-gradient(180deg,#0d1530 0%,#0b1020 100%);border-bottom:2px solid var(--accent);padding:40px}
+.paste-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--accent3);margin-bottom:8px}
+.paste-sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+.col-guide{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.col-pill{font-family:'DM Mono',monospace;font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid var(--border);color:var(--muted)}
+.col-pill span{color:var(--accent3);font-weight:600}
+.col-pill b{color:var(--text)}
+textarea#paste-area{
+  width:100%;min-height:200px;padding:16px;
+  background:#080e1c;border:2px solid var(--border);
+  border-radius:8px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:12px;
+  resize:vertical;outline:none;transition:border-color .2s;
+  line-height:1.5
+}
+textarea#paste-area:focus{border-color:var(--accent)}
+textarea#paste-area::placeholder{color:#2a3a60}
+.paste-controls{display:flex;gap:12px;margin-top:16px;align-items:center;flex-wrap:wrap}
+.btn{padding:11px 24px;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:all .18s}
+.btn-primary{background:var(--accent);color:#080c18}
+.btn-primary:hover{background:#33eaff;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+.btn-danger{background:transparent;color:#f87171;border:1px solid rgba(248,113,113,0.3)}
+.btn-danger:hover{background:rgba(248,113,113,0.1)}
+#parse-status{font-family:'DM Mono',monospace;font-size:12px;padding:8px 16px;border-radius:6px;display:none}
+.status-ok{background:rgba(124,252,110,0.1);border:1px solid rgba(124,252,110,0.3);color:var(--accent2)}
+.status-err{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171}
+.headers-check{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.headers-check input{accent-color:var(--accent)}
+
+/* ── NAV ── */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 40px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav a{padding:14px 18px;font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s}
+nav a:hover{color:var(--text);border-bottom-color:var(--accent)}
+
+/* ── MAIN ── */
+main{max-width:1400px;margin:0 auto;padding:0 40px 80px}
+.section{padding:48px 0 24px}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--muted);margin-bottom:6px;border-left:3px solid var(--accent);padding-left:14px}
+.section-desc{color:var(--muted);font-size:14px;margin-bottom:28px;padding-left:17px}
+.divider{border:none;border-top:1px solid var(--border);margin:0}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:32px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--c,var(--accent));border-radius:8px;padding:20px;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.kpi-value{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--c,var(--accent));line-height:1}
+.kpi-unit{font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--surface2)}
+th{padding:12px 14px;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-align:left;border-bottom:1px solid var(--border)}
+th.num,td.num{text-align:right}
+td{padding:11px 14px;border-bottom:1px solid rgba(30,45,80,0.5);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(0,229,255,0.03)}
+tfoot td{background:var(--surface2);font-weight:600;font-family:'DM Mono',monospace;font-size:12px;border-top:2px solid var(--border)}
+.highlight{font-weight:700;font-family:'DM Mono',monospace}
+.tramo-badge{font-family:'DM Mono',monospace;font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);color:var(--accent);white-space:nowrap}
+.tag{font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:3px;text-transform:uppercase}
+.tag-ida{background:rgba(0,229,255,0.12);color:var(--ida);border:1px solid rgba(0,229,255,0.2)}
+.tag-vuelta{background:rgba(255,107,53,0.12);color:var(--vuelta);border:1px solid rgba(255,107,53,0.2)}
+.spd-high{color:#7cfc6e}
+.spd-mid{color:var(--accent3)}
+.spd-low{color:#f87171}
+.raw-row-ida td:first-child{border-left:2px solid rgba(0,229,255,0.3)}
+.raw-row-vuelta td:first-child{border-left:2px solid rgba(255,107,53,0.3)}
+
+/* ── CHARTS ── */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.chart-sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+
+/* ── SENTIDO CARDS ── */
+.sentido-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.sentido-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+
+/* ── NOTE ── */
+.note-box{background:rgba(255,209,102,0.06);border:1px solid rgba(255,209,102,0.2);border-radius:6px;padding:14px 18px;font-size:13px;color:var(--muted);margin-bottom:24px}
+.note-box strong{color:var(--accent3)}
+
+/* ── EXPORT BAR ── */
+.export-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+
+/* ── EMPTY STATE ── */
+#report{display:none}
+.empty-state{text-align:center;padding:80px 40px;color:var(--muted)}
+.empty-icon{font-size:64px;margin-bottom:20px;opacity:.3}
+.empty-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--muted);margin-bottom:8px}
+
+/* ── FOOTER ── */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:24px 40px;font-size:12px;color:var(--muted);font-family:'DM Mono',monospace}
+
+@media(max-width:680px){
+  header,nav,.paste-section,main,footer{padding-left:20px;padding-right:20px}
+  .sentido-grid{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">Ingeniería de Tránsito</div>
+  <h1>ANÁLISIS DE <span>VELOCIDADES</span> Y TIEMPOS DE VIAJE</h1>
+ <div class="header-meta" id="header-meta">
+    <span class="meta-pill" style="opacity:.4">Ingresa los datos para ver el análisis</span>
+  </div>
+</header>
+
+<!-- ═══════════════ ZONA DE PEGADO ═══════════════ -->
+<div class="paste-section">
+  <div class="paste-title">DATOS</div>
+
+
+  <textarea id="paste-area" placeholder="Datos ...
+
+..."></textarea>
+
+  <div class="paste-controls">
+    <label class="headers-check">
+      <input type="checkbox" id="has-headers" checked> La primera fila son encabezados (ignorar)
+    </label>
+    <button class="btn btn-primary" onclick="analizarDatos()">▶ ANALIZAR DATOS</button>
+    <button class="btn btn-danger" onclick="limpiarTodo()">✕ Limpiar</button>
+    <span id="parse-status"></span>
+  </div>
+</div>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav>
+  <a href="#resumen">Resumen Global</a>
+  <a href="#por-tramo">Por Tramo</a>
+  <a href="#por-vehiculo">Por Tipo Vehículo</a>
+  <a href="#por-sentido">Por Sentido</a>
+  <a href="#graficas">Gráficas</a>
+  <a href="#datos-crudos">Datos Crudos</a>
+</nav>
+
+<!-- ═══════════════ EMPTY STATE ═══════════════ -->
+<div id="empty-state">
+  <div class="empty-state">
+    <div class="empty-icon">📊</div>
+    <div class="empty-title">LISTO PARA ANALIZAR</div>
+    <p>Pega tus datos de Excel arriba y presiona <strong style="color:var(--accent)">ANALIZAR DATOS</strong></p>
+  </div>
+</div>
+
+<!-- ═══════════════ REPORTE (oculto hasta analizar) ═══════════════ -->
+<div id="report">
+<main>
+
+<!-- 01 RESUMEN GLOBAL -->
+<section class="section" id="resumen">
+  <div class="section-title">01 — Resumen Global</div>
+  <p class="section-desc">Indicadores clave de todo el conjunto de datos analizados.</p>
+  <div class="note-box">
+    <strong>Nota metodológica:</strong> Los tiempos con sentido SALIDA/VUELTA pueden tener hora fin anterior a hora inicio (circulación de retorno). Para el cálculo de promedios se usan valores absolutos de velocidad, conforme a criterios de ingeniería de tránsito.
+  </div>
+  <div id="kpi-grid" class="kpi-grid"></div>
+  <div class="export-bar">
+    <button class="btn btn-primary" onclick="exportResumenGlobal()">⬇ Exportar Resumen a Excel</button>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl-resumen-global">
+      <thead><tr>
+        <th>Tramo</th>
+        <th class="num">Distancia (km)</th>
+        <th class="num">N° Vehículos</th>
+        <th class="num">Vel. Prom. IDA (km/h)</th>
+        <th class="num">T. Prom. IDA</th>
+        <th class="num">Vel. Prom. VUELTA (km/h)</th>
+        <th class="num">T. Prom. VUELTA</th>
+        <th class="num">Vel. Prom. GLOBAL (km/h)</th>
+        <th class="num">T. Prom. GLOBAL</th>
+      </tr></thead>
+      <tbody id="tbody-resumen"></tbody>
+      <tfoot id="tfoot-resumen"></tfoot>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 02 POR TRAMO -->
+<section class="section" id="por-tramo">
+  <div class="section-title">02 — Análisis por Tramo y Tipo de Vehículo</div>
+  <p class="section-desc">Desglose detallado de velocidades y tiempos promedio por cada combinación de tramo, tipo de vehículo y sentido.</p>
+  <div class="export-bar">
+    <button class="btn btn-primary" onclick="exportPorTramo()">⬇ Exportar Tabla a Excel</button>
+  </div>
+  <div id="tramos-container"></div>
+</section>
+
+<hr class="divider">
+
+<!-- 03 POR TIPO VEHÍCULO -->
+<section class="section" id="por-vehiculo">
+  <div class="section-title">03 — Análisis por Tipo de Vehículo</div>
+  <p class="section-desc">Consolidado de velocidades y tiempos de viaje para cada categoría vehicular, independiente del tramo.</p>
+  <div class="export-bar">
+    <button class="btn btn-primary" onclick="exportPorVehiculo()">⬇ Exportar Tabla a Excel</button>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl-vehiculos">
+      <thead><tr>
+        <th>Tipo Vehículo</th>
+        <th class="num">Total Registros</th>
+        <th class="num">IDA (n)</th>
+        <th class="num">Vel. Prom. IDA (km/h)</th>
+        <th class="num">VUELTA (n)</th>
+        <th class="num">Vel. Prom. VUELTA (km/h)</th>
+        <th class="num">Vel. Prom. GLOBAL (km/h)</th>
+        <th class="num">% del total</th>
+      </tr></thead>
+      <tbody id="tbody-vehiculos"></tbody>
+      <tfoot id="tfoot-vehiculos"></tfoot>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 04 POR SENTIDO -->
+<section class="section" id="por-sentido">
+  <div class="section-title">04 — Análisis por Sentido de Circulación</div>
+  <p class="section-desc">Comparativo de rendimiento entre vehículos en sentido IDA y sentido VUELTA/SALIDA.</p>
+  <div class="export-bar">
+    <button class="btn btn-primary" onclick="exportPorSentido()">⬇ Exportar Tabla a Excel</button>
+  </div>
+  <div class="sentido-grid" id="sentido-cards"></div>
+  <div class="table-wrap">
+    <table id="tbl-sentido">
+      <thead><tr>
+        <th>Tipo Vehículo</th>
+        <th class="num">N° IDA</th>
+        <th class="num">Vel. Prom. IDA (km/h)</th>
+        <th class="num">T. Prom. IDA</th>
+        <th class="num">N° VUELTA</th>
+        <th class="num">Vel. Prom. VUELTA (km/h)</th>
+        <th class="num">T. Prom. VUELTA</th>
+        <th class="num">Diferencia (km/h)</th>
+      </tr></thead>
+      <tbody id="tbody-sentido"></tbody>
+      <tfoot id="tfoot-sentido"></tfoot>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 05 GRÁFICAS -->
+<section class="section" id="graficas">
+  <div class="section-title">05 — Visualizaciones</div>
+  <p class="section-desc">Representaciones gráficas generadas automáticamente desde tus datos.</p>
+  <div class="export-bar">
+    <button class="btn btn-primary" onclick="exportAllCharts()">⬇ Exportar Gráficas (PNG)</button>
+    <button class="btn btn-ghost" onclick="exportFullReport()">⬇ Exportar Informe Completo Excel</button>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Velocidad Promedio por Tipo de Vehículo</div>
+      <div class="chart-sub">Comparativo IDA vs VUELTA vs GLOBAL (km/h)</div>
+      <canvas id="chart-vel-vehiculo"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Distribución de Vehículos por Sentido</div>
+      <div class="chart-sub">Cantidad de registros IDA vs VUELTA</div>
+      <canvas id="chart-dist-sentido"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Velocidad Promedio por Tramo</div>
+      <div class="chart-sub">IDA — VUELTA — GLOBAL por tramo analizado</div>
+      <canvas id="chart-vel-tramo"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Composición Vehicular</div>
+      <div class="chart-sub">Distribución por tipo de vehículo registrado</div>
+      <canvas id="chart-composicion"></canvas>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <div class="chart-title">Velocidades Individuales por Registro</div>
+      <div class="chart-sub">Cada vehículo — IDA en azul, VUELTA en naranja</div>
+      <canvas id="chart-scatter" style="max-height:260px"></canvas>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- 06 DATOS CRUDOS -->
+<section class="section" id="datos-crudos">
+  <div class="section-title">06 — Datos Originales</div>
+  <p class="section-desc">Registros de campo completos tal como fueron capturados.</p>
+  <div class="export-bar">
+    <button class="btn btn-primary" onclick="exportDatosCrudos()">⬇ Exportar Datos Originales a Excel</button>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl-raw">
+      <thead><tr>
+        <th>#</th><th>Tramo</th><th class="num">Dist. (km)</th>
+        <th>Hora Inicio</th><th>Hora Fin</th><th>ID / Placa</th>
+        <th>Tipo</th><th>Sentido</th>
+        <th class="num">Tiempo</th><th class="num">Vel. (km/h)</th>
+      </tr></thead>
+      <tbody id="tbody-raw"></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>Informe Técnico de Ingeniería de Tránsito · Análisis de Velocidades y Tiempos de Viaje</p>
+  <p>Generado automáticamente · <span id="fecha-gen"></span></p>
+</footer>
+</div><!-- #report -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  MOTOR DE ANÁLISIS — Todo se calcula desde los datos crudos
+// ═══════════════════════════════════════════════════════
+
+let datos = [];
+let charts = {};
+
+// ── COLORES PALETA ──
+const COLORS = ['#00e5ff','#7cfc6e','#ffd166','#ff6b35','#c084fc','#f87171','#38bdf8','#fb923c','#a3e635','#e879f9'];
+const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+const fmtVel = v => v===null ? '—' : v.toFixed(2);
+
+// ── TIEMPO: convierte "01:07:43" → minutos totales ──
+function tiempoAMin(str){
+  if(!str) return null;
+  str = String(str).trim();
+  // Si tiene formato HH:MM:SS
+  const p = str.split(':').map(Number);
+  if(p.length===3) return p[0]*60 + p[1] + p[2]/60;
+  if(p.length===2) return p[0]*60 + p[1];
+  return null;
+}
+
+// ── Formatea minutos como "MM:SS" ──
+function minAMmss(m){
+  if(m===null||isNaN(m)) return '—';
+  const totalSeg = Math.round(Math.abs(m)*60);
+  const mm = Math.floor(totalSeg/60);
+  const ss = totalSeg%60;
+  return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+
+// ── Formatea minutos como "HH:MM:SS" ──
+function minAHhmmss(m){
+  if(m===null||isNaN(m)) return '—';
+  const totalSeg = Math.round(Math.abs(m)*60);
+  const hh = Math.floor(totalSeg/3600);
+  const mm = Math.floor((totalSeg%3600)/60);
+  const ss = totalSeg%60;
+  if(hh>0) return `${hh}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  return `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+
+// ── PARSEAR DATOS PEGADOS ──
+function parsearPaste(texto){
+  const filas = texto.trim().split('\n').map(l=>l.trim()).filter(l=>l);
+  if(!filas.length) throw new Error('No hay datos para analizar');
+
+  const tieneHeaders = document.getElementById('has-headers').checked;
+  const inicio = tieneHeaders ? 1 : 0;
+
+  const resultado = [];
+  const errores = [];
+
+  for(let i=inicio; i<filas.length; i++){
+    const cols = filas[i].split('\t');
+    if(cols.length < 7){
+      errores.push(`Fila ${i+1}: solo ${cols.length} columnas (se esperan mínimo 7)`);
+      continue;
+    }
+
+    const tramo   = (cols[0]||'').trim();
+    const distRaw = parseFloat((cols[1]||'').replace(',','.'));
+    const ini     = (cols[2]||'').trim();
+    const fin     = (cols[3]||'').trim();
+    const id      = (cols[4]||'').trim();
+    const tipo    = (cols[5]||'').trim().toUpperCase();
+    const sentido = (cols[6]||'').trim().toUpperCase();
+
+    // Tiempo y velocidad: columnas opcionales H e I
+    let tiempo = cols[7] ? (cols[7]||'').trim() : null;
+    let vel    = cols[8] ? parseFloat((cols[8]||'').replace(',','.')) : null;
+
+    // Si no hay velocidad pero hay tiempo y distancia, calcularla
+    if((vel===null||isNaN(vel)) && tiempo && !isNaN(distRaw)){
+      const minutos = tiempoAMin(tiempo);
+      if(minutos && minutos>0) vel = distRaw / (minutos/60);
+    }
+
+    if(!tramo){errores.push(`Fila ${i+1}: tramo vacío`); continue}
+    if(isNaN(distRaw)){errores.push(`Fila ${i+1}: distancia inválida "${cols[1]}"`); continue}
+    if(!tipo){errores.push(`Fila ${i+1}: tipo de vehículo vacío`); continue}
+    if(isNaN(vel)||vel<=0){errores.push(`Fila ${i+1}: velocidad inválida`); continue}
+
+    // Normalizar sentido
+    const sentidoNorm = sentido==='IDA'?'IDA':'VUELTA';
+
+    resultado.push({
+      tramo, dist:distRaw, ini, fin, id, tipo,
+      sentido:sentidoNorm, tiempo:tiempo||'', vel:Math.abs(vel)
+    });
+  }
+
+  if(!resultado.length) throw new Error('No se pudo parsear ninguna fila válida.\n'+errores.slice(0,3).join('\n'));
+  return {datos:resultado, errores};
+}
+
+// ══════════════ RENDERIZAR TODO ══════════════
+function renderizar(d){
+  datos = d;
+
+  // Destruir charts previos
+  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  charts={};
+
+  renderKPI();
+  renderResumenGlobal();
+  renderPorTramo();
+  renderPorVehiculo();
+  renderPorSentido();
+  renderRaw();
+  renderCharts();
+
+  // Fecha
+  document.getElementById('fecha-gen').textContent = new Date().toLocaleDateString('es-PE',{year:'numeric',month:'long',day:'numeric'});
+}
+
+// ── KPI ──
+function renderKPI(){
+  const vels = datos.map(d=>d.vel);
+  const maxV = Math.max(...vels);
+  const minV = Math.min(...vels);
+  const maxD = datos.find(d=>d.vel===maxV);
+  const minD = datos.find(d=>d.vel===minV);
+  const tramos = [...new Set(datos.map(d=>d.tramo))];
+  const tipos  = [...new Set(datos.map(d=>d.tipo))];
+  const nIda   = datos.filter(d=>d.sentido==='IDA').length;
+  const nVuelta= datos.filter(d=>d.sentido==='VUELTA').length;
+
+  const cards=[
+    {label:'Total Vehículos',   val:datos.length,           unit:'registros analizados',         c:'#00e5ff'},
+    {label:'Tramos Analizados', val:tramos.length,           unit:tramos.join(' y '),             c:'#7cfc6e'},
+    {label:'Vel. Promedio Global', val:avg(vels).toFixed(1), unit:'km/h (todos los vehículos)',   c:'#ffd166'},
+    {label:'Vel. Máxima',       val:maxV.toFixed(1),         unit:`km/h — ${maxD.tipo} / ${maxD.tramo}`, c:'#ff6b35'},
+    {label:'Vel. Mínima',       val:minV.toFixed(1),         unit:`km/h — ${minD.tipo} / ${minD.tramo}`, c:'#c084fc'},
+    {label:'Sentido IDA',       val:nIda,                    unit:'vehículos registrados',        c:'#00e5ff'},
+    {label:'Sentido VUELTA',    val:nVuelta,                 unit:'vehículos registrados',        c:'#ff6b35'},
+    {label:'Tipos de Vehículo', val:tipos.length,            unit:tipos.join(', '),               c:'#ffd166'},
+  ];
+
+  document.getElementById('kpi-grid').innerHTML = cards.map(c=>`
+    <div class="kpi-card" style="--c:${c.c}">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value">${c.val}</div>
+      <div class="kpi-unit">${c.unit}</div>
+    </div>`).join('');
+
+  // Header meta
+  const trDs = tramos.map(t=>{
+    const dist = datos.find(d=>d.tramo===t)?.dist || '?';
+    return `<span class="meta-pill">${t} | ${dist} km</span>`;
+  }).join('');
+  document.getElementById('header-meta').innerHTML =
+    trDs +
+    `<span class="meta-pill">Total registros: ${datos.length}</span>` +
+    `<span class="meta-pill">${tipos.length} tipos de vehículo</span>`;
+}
+
+// ── RESUMEN GLOBAL POR TRAMO ──
+function renderResumenGlobal(){
+  const tramos = [...new Set(datos.map(d=>d.tramo))];
+  let tbody='', tfoot='';
+  let allVels=[], allIda=[], allVuelta=[];
+
+  tramos.forEach(t=>{
+    const td = datos.filter(d=>d.tramo===t);
+    const dist = td[0]?.dist || '?';
+    const ida  = td.filter(d=>d.sentido==='IDA');
+    const vuel = td.filter(d=>d.sentido==='VUELTA');
+    const avgVelIda  = avg(ida.map(d=>d.vel));
+    const avgVelVuel = avg(vuel.map(d=>d.vel));
+    const avgVelAll  = avg(td.map(d=>d.vel));
+    const avgTIda    = avg(ida.map(d=>tiempoAMin(d.tiempo)));
+    const avgTVuel   = avg(vuel.map(d=>tiempoAMin(d.tiempo)));
+    const avgTAll    = avg(td.map(d=>tiempoAMin(d.tiempo)));
+
+    allVels.push(...td.map(d=>d.vel));
+    allIda.push(...ida.map(d=>d.vel));
+    allVuelta.push(...vuel.map(d=>d.vel));
+
+    tbody+=`<tr>
+      <td><span class="tramo-badge">${t}</span></td>
+      <td class="num">${dist}</td>
+      <td class="num">${td.length}</td>
+      <td class="num" style="color:var(--ida)">${fmtVel(avgVelIda)}</td>
+      <td class="num" style="color:var(--ida)">${minAMmss(avgTIda)}</td>
+      <td class="num" style="color:var(--vuelta)">${fmtVel(avgVelVuel)}</td>
+      <td class="num" style="color:var(--vuelta)">${minAMmss(avgTVuel)}</td>
+      <td class="num" style="color:var(--ambos)">${fmtVel(avgVelAll)}</td>
+      <td class="num" style="color:var(--ambos)">${minAMmss(avgTAll)}</td>
+    </tr>`;
+  });
+
+  tfoot=`<tr>
+    <td colspan="2">PROMEDIO GENERAL</td>
+    <td class="num">${datos.length}</td>
+    <td class="num">${fmtVel(avg(allIda))}</td>
+    <td class="num">—</td>
+    <td class="num">${fmtVel(avg(allVuelta))}</td>
+    <td class="num">—</td>
+    <td class="num">${fmtVel(avg(allVels))}</td>
+    <td class="num">—</td>
+  </tr>`;
+
+  document.getElementById('tbody-resumen').innerHTML=tbody;
+  document.getElementById('tfoot-resumen').innerHTML=tfoot;
+}
+
+// ── POR TRAMO ──
+function renderPorTramo(){
+  const tramos = [...new Set(datos.map(d=>d.tramo))];
+  const colores=['var(--accent3)','var(--accent2)','var(--accent4)','var(--accent5)'];
+  let html='';
+
+  tramos.forEach((t,ti)=>{
+    const td = datos.filter(d=>d.tramo===t);
+    const dist = td[0]?.dist||'?';
+    const tipos = [...new Set(td.map(d=>d.tipo))].sort();
+    const tableId = `tbl-tramo-${t.replace(/[^a-z0-9]/gi,'_')}`;
+
+    let tbody='';
+    tipos.forEach(tipo=>{
+      const tv  = td.filter(d=>d.tipo===tipo);
+      const ida = tv.filter(d=>d.sentido==='IDA');
+      const vuel= tv.filter(d=>d.sentido==='VUELTA');
+      const avgVI = avg(ida.map(d=>d.vel));
+      const avgVV = avg(vuel.map(d=>d.vel));
+      const avgVT = avg(tv.map(d=>d.vel));
+      const avgTI = avg(ida.map(d=>tiempoAMin(d.tiempo)));
+      const avgTV2= avg(vuel.map(d=>tiempoAMin(d.tiempo)));
+      const avgTT = avg(tv.map(d=>tiempoAMin(d.tiempo)));
+
+      tbody+=`<tr>
+        <td><strong>${tipo}</strong></td>
+        <td class="num" style="color:var(--ida)">${ida.length||'—'}</td>
+        <td class="num" style="color:var(--ida)">${fmtVel(avgVI)}</td>
+        <td class="num" style="color:var(--ida)">${minAMmss(avgTI)}</td>
+        <td class="num" style="color:var(--vuelta)">${vuel.length||'—'}</td>
+        <td class="num" style="color:var(--vuelta)">${fmtVel(avgVV)}</td>
+        <td class="num" style="color:var(--vuelta)">${minAMmss(avgTV2)}</td>
+        <td class="num">${tv.length}</td>
+        <td class="num highlight">${fmtVel(avgVT)}</td>
+        <td class="num highlight">${minAMmss(avgTT)}</td>
+      </tr>`;
+    });
+
+    // Totales del tramo
+    const ida  = td.filter(d=>d.sentido==='IDA');
+    const vuel = td.filter(d=>d.sentido==='VUELTA');
+    const tfoot=`<tr>
+      <td>PROMEDIO TRAMO ${t}</td>
+      <td class="num">${ida.length}</td>
+      <td class="num">${fmtVel(avg(ida.map(d=>d.vel)))}</td>
+      <td class="num">${minAMmss(avg(ida.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num">${vuel.length}</td>
+      <td class="num">${fmtVel(avg(vuel.map(d=>d.vel)))}</td>
+      <td class="num">${minAMmss(avg(vuel.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num">${td.length}</td>
+      <td class="num">${fmtVel(avg(td.map(d=>d.vel)))}</td>
+      <td class="num">${minAMmss(avg(td.map(d=>tiempoAMin(d.tiempo))))}</td>
+    </tr>`;
+
+    html+=`
+      <h3 style="font-family:'Bebas Neue';font-size:22px;color:${colores[ti%colores.length]};margin-bottom:12px;letter-spacing:1px;">
+        TRAMO ${t} &nbsp;<span style="font-family:'DM Mono';font-size:13px;color:var(--muted)">| ${dist} km | ${td.length} vehículos</span>
+      </h3>
+      <div class="table-wrap" style="margin-bottom:36px;">
+        <table id="${tableId}">
+          <thead><tr>
+            <th>Tipo Vehículo</th>
+            <th class="num">N° IDA</th><th class="num">Vel. IDA (km/h)</th><th class="num">T. IDA</th>
+            <th class="num">N° VUELTA</th><th class="num">Vel. VUELTA (km/h)</th><th class="num">T. VUELTA</th>
+            <th class="num">N° TOTAL</th><th class="num">Vel. PROM (km/h)</th><th class="num">T. PROM</th>
+          </tr></thead>
+          <tbody>${tbody}</tbody>
+          <tfoot>${tfoot}</tfoot>
+        </table>
+      </div>`;
+  });
+
+  document.getElementById('tramos-container').innerHTML=html;
+}
+
+// ── POR TIPO VEHÍCULO ──
+function renderPorVehiculo(){
+  const tipos = [...new Set(datos.map(d=>d.tipo))].sort();
+  let tbody='';
+
+  tipos.forEach(tipo=>{
+    const tv   = datos.filter(d=>d.tipo===tipo);
+    const ida  = tv.filter(d=>d.sentido==='IDA');
+    const vuel = tv.filter(d=>d.sentido==='VUELTA');
+    const pct  = (tv.length/datos.length*100).toFixed(1)+'%';
+    const avgVI= avg(ida.map(d=>d.vel));
+    const avgVV= avg(vuel.map(d=>d.vel));
+    const avgVT= avg(tv.map(d=>d.vel));
+
+    tbody+=`<tr>
+      <td><strong>${tipo}</strong></td>
+      <td class="num">${tv.length}</td>
+      <td class="num" style="color:var(--ida)">${ida.length||'—'}</td>
+      <td class="num" style="color:var(--ida)">${fmtVel(avgVI)}</td>
+      <td class="num" style="color:var(--vuelta)">${vuel.length||'—'}</td>
+      <td class="num" style="color:var(--vuelta)">${fmtVel(avgVV)}</td>
+      <td class="num highlight">${fmtVel(avgVT)}</td>
+      <td class="num">${pct}</td>
+    </tr>`;
+  });
+
+  // Totales
+  const ida  = datos.filter(d=>d.sentido==='IDA');
+  const vuel = datos.filter(d=>d.sentido==='VUELTA');
+  const tfoot=`<tr>
+    <td>PROMEDIO GLOBAL</td>
+    <td class="num">${datos.length}</td>
+    <td class="num">${ida.length}</td>
+    <td class="num">${fmtVel(avg(ida.map(d=>d.vel)))}</td>
+    <td class="num">${vuel.length}</td>
+    <td class="num">${fmtVel(avg(vuel.map(d=>d.vel)))}</td>
+    <td class="num">${fmtVel(avg(datos.map(d=>d.vel)))}</td>
+    <td class="num">100%</td>
+  </tr>`;
+
+  document.getElementById('tbody-vehiculos').innerHTML=tbody;
+  document.getElementById('tfoot-vehiculos').innerHTML=tfoot;
+}
+
+// ── POR SENTIDO ──
+function renderPorSentido(){
+  const tipos = [...new Set(datos.map(d=>d.tipo))].sort();
+  const ida   = datos.filter(d=>d.sentido==='IDA');
+  const vuel  = datos.filter(d=>d.sentido==='VUELTA');
+
+  // Cards resumen
+  document.getElementById('sentido-cards').innerHTML=`
+    <div class="sentido-card" style="border-color:rgba(0,229,255,0.3)">
+      <div style="font-family:'Bebas Neue';font-size:18px;color:var(--ida);margin-bottom:12px">⬆ SENTIDO IDA</div>
+      <table style="font-size:13px;width:100%">
+        <tr><td style="color:var(--muted)">Total vehículos</td><td class="num">${ida.length}</td></tr>
+        <tr><td style="color:var(--muted)">Vel. promedio</td><td class="num" style="color:var(--ida)">${fmtVel(avg(ida.map(d=>d.vel)))} km/h</td></tr>
+        <tr><td style="color:var(--muted)">Vel. máxima</td><td class="num">${fmtVel(Math.max(...ida.map(d=>d.vel)))} km/h</td></tr>
+        <tr><td style="color:var(--muted)">Vel. mínima</td><td class="num">${fmtVel(Math.min(...ida.map(d=>d.vel)))} km/h</td></tr>
+      </table>
+    </div>
+    <div class="sentido-card" style="border-color:rgba(255,107,53,0.3)">
+      <div style="font-family:'Bebas Neue';font-size:18px;color:var(--vuelta);margin-bottom:12px">⬇ SENTIDO VUELTA / SALIDA</div>
+      <table style="font-size:13px;width:100%">
+        <tr><td style="color:var(--muted)">Total vehículos</td><td class="num">${vuel.length}</td></tr>
+        <tr><td style="color:var(--muted)">Vel. promedio</td><td class="num" style="color:var(--vuelta)">${fmtVel(avg(vuel.map(d=>d.vel)))} km/h</td></tr>
+        <tr><td style="color:var(--muted)">Vel. máxima</td><td class="num">${vuel.length?fmtVel(Math.max(...vuel.map(d=>d.vel))):'—'} km/h</td></tr>
+        <tr><td style="color:var(--muted)">Vel. mínima</td><td class="num">${vuel.length?fmtVel(Math.min(...vuel.map(d=>d.vel))):'—'} km/h</td></tr>
+      </table>
+    </div>`;
+
+  // Tabla por tipo
+  let tbody='';
+  tipos.forEach(tipo=>{
+    const ti = ida.filter(d=>d.tipo===tipo);
+    const tv = vuel.filter(d=>d.tipo===tipo);
+    const avgVI= avg(ti.map(d=>d.vel));
+    const avgVV= avg(tv.map(d=>d.vel));
+    const diff = (avgVI!==null&&avgVV!==null) ? (avgVI-avgVV).toFixed(2) : '—';
+    const diffColor = diff!=='—' ? (parseFloat(diff)>=0?'color:#7cfc6e':'color:#f87171') : '';
+
+    tbody+=`<tr>
+      <td><strong>${tipo}</strong></td>
+      <td class="num" style="color:var(--ida)">${ti.length||'—'}</td>
+      <td class="num" style="color:var(--ida)">${fmtVel(avgVI)}</td>
+      <td class="num" style="color:var(--ida)">${minAMmss(avg(ti.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num" style="color:var(--vuelta)">${tv.length||'—'}</td>
+      <td class="num" style="color:var(--vuelta)">${fmtVel(avgVV)}</td>
+      <td class="num" style="color:var(--vuelta)">${minAMmss(avg(tv.map(d=>tiempoAMin(d.tiempo))))}</td>
+      <td class="num" style="${diffColor}">${diff}</td>
+    </tr>`;
+  });
+
+  const tfoot=`<tr>
+    <td>TOTAL / PROMEDIO</td>
+    <td class="num">${ida.length}</td>
+    <td class="num">${fmtVel(avg(ida.map(d=>d.vel)))}</td>
+    <td class="num">${minAMmss(avg(ida.map(d=>tiempoAMin(d.tiempo))))}</td>
+    <td class="num">${vuel.length}</td>
+    <td class="num">${fmtVel(avg(vuel.map(d=>d.vel)))}</td>
+    <td class="num">${minAMmss(avg(vuel.map(d=>tiempoAMin(d.tiempo))))}</td>
+    <td class="num">—</td>
+  </tr>`;
+
+  document.getElementById('tbody-sentido').innerHTML=tbody;
+  document.getElementById('tfoot-sentido').innerHTML=tfoot;
+}
+
+// ── DATOS CRUDOS ──
+function renderRaw(){
+  const tbody = document.getElementById('tbody-raw');
+  tbody.innerHTML='';
+  datos.forEach((d,i)=>{
+    const ida = d.sentido==='IDA';
+    const velC = d.vel>=50?'spd-high':d.vel>=40?'spd-mid':'spd-low';
+    const tr = document.createElement('tr');
+    tr.className = ida?'raw-row-ida':'raw-row-vuelta';
+    tr.innerHTML=`
+      <td style="color:var(--muted);font-family:'DM Mono',monospace;font-size:11px">${String(i+1).padStart(2,'0')}</td>
+      <td><span class="tramo-badge">${d.tramo}</span></td>
+      <td class="num">${d.dist}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${d.ini}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${d.fin}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600">${d.id}</td>
+      <td><strong>${d.tipo}</strong></td>
+      <td><span class="tag ${ida?'tag-ida':'tag-vuelta'}">${d.sentido}</span></td>
+      <td class="num" style="font-family:'DM Mono',monospace">${d.tiempo}</td>
+      <td class="num ${velC}" style="font-weight:700">${d.vel.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── GRÁFICAS ──
+function renderCharts(){
+  Chart.defaults.color='#7a8aaa';
+  Chart.defaults.borderColor='#253050';
+  Chart.defaults.font.family="'DM Sans', sans-serif";
+
+  const tipos = [...new Set(datos.map(d=>d.tipo))].sort();
+  const tramos = [...new Set(datos.map(d=>d.tramo))];
+
+  // 1. Velocidad por tipo de vehículo
+  const velIda   = tipos.map(t=>avg(datos.filter(d=>d.tipo===t&&d.sentido==='IDA').map(d=>d.vel)));
+  const velVuelta= tipos.map(t=>avg(datos.filter(d=>d.tipo===t&&d.sentido==='VUELTA').map(d=>d.vel)));
+  const velGlobal= tipos.map(t=>avg(datos.filter(d=>d.tipo===t).map(d=>d.vel)));
+
+  charts['vel-vehiculo']=new Chart(document.getElementById('chart-vel-vehiculo'),{
+    type:'bar',
+    data:{labels:tipos,datasets:[
+      {label:'IDA',   data:velIda,    backgroundColor:'rgba(0,229,255,0.7)', borderColor:'#00e5ff',borderWidth:1.5},
+      {label:'VUELTA',data:velVuelta, backgroundColor:'rgba(255,107,53,0.7)',borderColor:'#ff6b35',borderWidth:1.5},
+      {label:'GLOBAL',data:velGlobal, backgroundColor:'rgba(255,209,102,0.7)',borderColor:'#ffd166',borderWidth:1.5},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#e8edf5',font:{size:11}}}},
+      scales:{y:{grid:{color:'rgba(37,48,80,0.5)'},ticks:{color:'#7a8aaa'},title:{display:true,text:'km/h',color:'#7a8aaa'}},
+              x:{grid:{color:'rgba(37,48,80,0.3)'},ticks:{color:'#e8edf5'}}}}
+  });
+
+  // 2. Distribución sentido
+  const nIda  = datos.filter(d=>d.sentido==='IDA').length;
+  const nVuel = datos.filter(d=>d.sentido==='VUELTA').length;
+  charts['dist-sentido']=new Chart(document.getElementById('chart-dist-sentido'),{
+    type:'doughnut',
+    data:{labels:[`IDA (${nIda})`,`VUELTA (${nVuel})`],datasets:[{
+      data:[nIda,nVuel],
+      backgroundColor:['rgba(0,229,255,0.75)','rgba(255,107,53,0.75)'],
+      borderColor:['#00e5ff','#ff6b35'],borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#e8edf5',font:{size:12}}},
+      tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} vehículos`}}}}
+  });
+
+  // 3. Velocidad por tramo
+  const vTramoIda   = tramos.map(t=>avg(datos.filter(d=>d.tramo===t&&d.sentido==='IDA').map(d=>d.vel)));
+  const vTramoVuelta= tramos.map(t=>avg(datos.filter(d=>d.tramo===t&&d.sentido==='VUELTA').map(d=>d.vel)));
+  const vTramoGlobal= tramos.map(t=>avg(datos.filter(d=>d.tramo===t).map(d=>d.vel)));
+  const tramosLabel = tramos.map(t=>{const d=datos.find(x=>x.tramo===t);return `${t} (${d?.dist||'?'} km)`;});
+
+  charts['vel-tramo']=new Chart(document.getElementById('chart-vel-tramo'),{
+    type:'bar',
+    data:{labels:tramosLabel,datasets:[
+      {label:'IDA',   data:vTramoIda,    backgroundColor:'rgba(0,229,255,0.7)', borderColor:'#00e5ff',borderWidth:1.5},
+      {label:'VUELTA',data:vTramoVuelta, backgroundColor:'rgba(255,107,53,0.7)',borderColor:'#ff6b35',borderWidth:1.5},
+      {label:'GLOBAL',data:vTramoGlobal, backgroundColor:'rgba(255,209,102,0.7)',borderColor:'#ffd166',borderWidth:1.5},
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#e8edf5',font:{size:11}}}},
+      scales:{y:{grid:{color:'rgba(37,48,80,0.5)'},ticks:{color:'#7a8aaa'},title:{display:true,text:'km/h',color:'#7a8aaa'}},
+              x:{grid:{color:'rgba(37,48,80,0.3)'},ticks:{color:'#e8edf5'}}}}
+  });
+
+  // 4. Composición vehicular (pie)
+  const compCants = tipos.map(t=>datos.filter(d=>d.tipo===t).length);
+  charts['composicion']=new Chart(document.getElementById('chart-composicion'),{
+    type:'pie',
+    data:{labels:tipos.map((t,i)=>`${t} (${compCants[i]})`),datasets:[{
+      data:compCants,
+      backgroundColor:COLORS.slice(0,tipos.length),
+      borderColor:'#0b0f1a',borderWidth:2}]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#e8edf5',font:{size:11}}}}}
+  });
+
+  // 5. Velocidades individuales
+  const colorsSc = datos.map(d=>d.sentido==='IDA'?'rgba(0,229,255,0.8)':'rgba(255,107,53,0.8)');
+  const borderSc = datos.map(d=>d.sentido==='IDA'?'#00e5ff':'#ff6b35');
+  charts['scatter']=new Chart(document.getElementById('chart-scatter'),{
+    type:'bar',
+    data:{labels:datos.map(d=>d.id),datasets:[{
+      label:'Velocidad (km/h)',
+      data:datos.map(d=>d.vel),
+      backgroundColor:colorsSc,borderColor:borderSc,borderWidth:1.5,borderRadius:4
+    }]},
+    options:{responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
+        const d=datos[ctx.dataIndex];
+        return [`${d.vel.toFixed(2)} km/h`,`${d.tipo} — ${d.sentido}`,`Tramo: ${d.tramo}`];
+      }}}},
+      scales:{y:{grid:{color:'rgba(37,48,80,0.5)'},ticks:{color:'#7a8aaa'},title:{display:true,text:'km/h',color:'#7a8aaa'}},
+              x:{grid:{color:'rgba(37,48,80,0.3)'},ticks:{color:'#e8edf5',font:{size:10}}}}}
+  });
+}
+
+// ══════════════ FUNCIONES BOTONES ══════════════
+
+function analizarDatos(){
+  const texto = document.getElementById('paste-area').value;
+  const status = document.getElementById('parse-status');
+
+  if(!texto.trim()){
+    status.style.display='inline-block';
+    status.className='status-err';
+    status.textContent='⚠ No hay datos. Pega datos de Excel primero.';
+    return;
+  }
+
+  try{
+    const {datos:d, errores} = parsearPaste(texto);
+    renderizar(d);
+
+    document.getElementById('report').style.display='block';
+    document.getElementById('empty-state').style.display='none';
+
+    status.style.display='inline-block';
+    status.className='status-ok';
+    status.textContent=`✓ ${d.length} registros analizados${errores.length?` (${errores.length} filas ignoradas)`:''}`;
+
+    // Scroll al reporte
+    setTimeout(()=>document.getElementById('resumen').scrollIntoView({behavior:'smooth'}),100);
+  }catch(e){
+    status.style.display='inline-block';
+    status.className='status-err';
+    status.textContent='⚠ '+e.message;
+  }
+}
+
+function limpiarTodo(){
+  document.getElementById('paste-area').value='';
+  document.getElementById('parse-status').style.display='none';
+  document.getElementById('report').style.display='none';
+  document.getElementById('empty-state').style.display='block';
+  datos=[];
+  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  charts={};
+  document.getElementById('header-meta').innerHTML='<span class="meta-pill" style="opacity:.4">Ingresa los datos para ver el análisis</span>';
+}
+
+function cargarEjemplo(){
+  const ejemplo = `V1→V2\t14.51\t04:13:38\t04:31:21\tCBX-005\tAUTO\tIDA\t00:17:43\t49.14
+V1→V2\t14.51\t06:55:09\t06:37:01\tZCS-951\tB2\tSALIDA\t00:18:08\t48.01
+V1→V2\t14.51\t04:50:33\t05:07:07\tV7L-424\tAUTO\tIDA\t00:16:34\t52.54
+V1→V2\t14.51\t07:31:47\t07:13:58\tVDN-683\tAUTO\tSALIDA\t00:17:49\t48.84
+V1→V2\t14.51\t07:45:24\t07:27:29\tW4S-960\tCOMBI\tSALIDA\t00:17:55\t48.56
+V1→V2\t14.51\t07:53:14\t07:35:47\tF6W-959\tCOMBI\tSALIDA\t00:17:27\t49.85
+V1→V2\t14.51\t05:57:10\t06:13:30\tAZT-821\tPICK UP\tIDA\t00:16:20\t53.29
+V2→V3\t34.20\t12:27:07\t11:37:00\tVAM-942\tC2\tSALIDA\t00:50:07\t40.95
+V2→V3\t34.20\t09:53:37\t11:00:48\tVBT-823\t3S3\tIDA\t01:07:11\t30.54
+V2→V3\t34.20\t12:29:04\t11:40:45\tZ6T-918\tC2\tSALIDA\t00:48:19\t42.48
+V2→V3\t34.20\t12:53:17\t11:51:04\tC9C-728\t3S3\tSALIDA\t01:02:13\t32.98
+V2→V3\t34.20\t10:09:56\t09:14:13\tAND-901\t3S3\tSALIDA\t00:55:43\t36.83
+V2→V3\t34.20\t07:32:23\t08:31:43\tF2Q-752\tC4\tIDA\t00:59:20\t34.58
+V2→V3\t34.20\t07:19:32\t08:26:50\tV5K-841\t3S3\tIDA\t01:07:18\t30.49
+V2→V3\t34.20\t10:12:29\t09:26:04\tX2Z-929\tC2\tSALIDA\t00:46:25\t44.20
+V2→V3\t34.20\t10:27:55\t09:42:26\tX2C-875\tC2\tSALIDA\t00:45:29\t45.10`;
+
+  document.getElementById('has-headers').checked=false;
+  document.getElementById('paste-area').value=ejemplo;
+  analizarDatos();
+}
+
+// ══════════════ EXPORTACIONES ══════════════
+function tableToAoA(tableId){
+  const table=document.getElementById(tableId);
+  if(!table) return [];
+  const rows=[];
+  table.querySelectorAll('tr').forEach(tr=>{
+    const row=[];
+    tr.querySelectorAll('th,td').forEach(cell=>row.push(cell.innerText.trim()));
+    rows.push(row);
+  });
+  return rows;
+}
+
+function exportSheet(sheetData,sheetName,fileName){
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(sheetData);
+  ws['!cols']=sheetData[0]?.map(()=>({wch:20}))||[];
+  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  XLSX.writeFile(wb,fileName);
+}
+
+function exportResumenGlobal(){ exportSheet(tableToAoA('tbl-resumen-global'),'Resumen Global','Resumen_Global_Transito.xlsx') }
+function exportPorVehiculo(){   exportSheet(tableToAoA('tbl-vehiculos'),'Por Tipo Vehiculo','Analisis_Por_Vehiculo.xlsx') }
+function exportPorSentido(){    exportSheet(tableToAoA('tbl-sentido'),'Por Sentido','Analisis_Por_Sentido.xlsx') }
+
+function exportPorTramo(){
+  const wb=XLSX.utils.book_new();
+  document.querySelectorAll('[id^="tbl-tramo-"]').forEach(tbl=>{
+    const name=tbl.id.replace('tbl-tramo-','').slice(0,31);
+    const ws=XLSX.utils.aoa_to_sheet(tableToAoA(tbl.id));
+    ws['!cols']=Array(10).fill({wch:18});
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  XLSX.writeFile(wb,'Analisis_Por_Tramo.xlsx');
+}
+
+function exportDatosCrudos(){
+  const rows=[['#','Tramo','Dist.(km)','Hora Inicio','Hora Fin','ID/Placa','Tipo','Sentido','Tiempo','Velocidad(km/h)']];
+  datos.forEach((d,i)=>rows.push([i+1,d.tramo,d.dist,d.ini,d.fin,d.id,d.tipo,d.sentido,d.tiempo,d.vel]));
+  exportSheet(rows,'Datos Originales','Datos_Originales_Transito.xlsx');
+}
+
+function exportFullReport(){
+  const wb=XLSX.utils.book_new();
+  const hojas=[
+    ['tbl-resumen-global','Resumen Global',9],
+    ['tbl-vehiculos','Por Tipo Vehiculo',8],
+    ['tbl-sentido','Por Sentido',8],
+  ];
+  hojas.forEach(([id,name,cols])=>{
+    const ws=XLSX.utils.aoa_to_sheet(tableToAoA(id));
+    ws['!cols']=Array(cols).fill({wch:20});
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  document.querySelectorAll('[id^="tbl-tramo-"]').forEach(tbl=>{
+    const ws=XLSX.utils.aoa_to_sheet(tableToAoA(tbl.id));
+    ws['!cols']=Array(10).fill({wch:18});
+    XLSX.utils.book_append_sheet(wb,ws,tbl.id.replace('tbl-tramo-','').slice(0,31));
+  });
+  const rows=[['#','Tramo','Dist.(km)','Hora Inicio','Hora Fin','ID/Placa','Tipo','Sentido','Tiempo','Velocidad(km/h)']];
+  datos.forEach((d,i)=>rows.push([i+1,d.tramo,d.dist,d.ini,d.fin,d.id,d.tipo,d.sentido,d.tiempo,d.vel]));
+  const ws6=XLSX.utils.aoa_to_sheet(rows);
+  ws6['!cols']=Array(10).fill({wch:18});
+  XLSX.utils.book_append_sheet(wb,ws6,'Datos Originales');
+  XLSX.writeFile(wb,'Informe_Completo_Transito.xlsx');
+}
+
+function exportAllCharts(){
+  ['chart-vel-vehiculo','chart-dist-sentido','chart-vel-tramo','chart-composicion','chart-scatter'].forEach((id,i)=>{
+    const canvas=document.getElementById(id);
+    if(!canvas) return;
+    const link=document.createElement('a');
+    link.href=canvas.toDataURL('image/png');
+    link.download=`Grafica_${i+1}_${id}.png`;
+    link.click();
+  });
+}
+
+// Permitir Ctrl+Enter en el textarea
+document.getElementById('paste-area').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)) analizarDatos();
+});
+</script>
+</body>
+</html>
