@@ -1,1 +1,1313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analizador de Conteo Vehicular OD</title>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#ffffff; --accent:#1d4ed8; --accent2:#0ea5e9;
+    --text:#1e293b; --muted:#64748b; --line:#dbe3ef; --ok:#16a34a; --warn:#b91c1c;
+    --pesado:#b45309; --amber:#d97706;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',Arial,sans-serif;
+    color:var(--text); padding-bottom:60px;
+  }
+  header{ padding:24px 24px 6px; color:#000000; }
+  header h1{ margin:0 0 4px; font-size:21px; }
+  header p{ margin:0; color:#cbd5e1; font-size:12.5px; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 20px; }
+  .card{
+    background:var(--panel); border-radius:12px; padding:20px 22px; margin-top:20px;
+    box-shadow:0 6px 18px rgba(15,23,42,.08); border:1px solid var(--line);
+  }
+  .card h2{ margin-top:0; font-size:16.5px; display:flex; align-items:center; gap:8px;}
+  .card h3{ font-size:14px; margin:18px 0 6px; color:#0f172a;}
+  .tag{ font-size:11px; background:var(--accent); color:#fff; padding:2px 8px; border-radius:20px;}
+  .tag.pesado{ background:var(--pesado);}
+  .tag.pro{ background:#7c3aed;}
+  textarea{
+    width:100%; min-height:130px; font-family:Consolas,monospace; font-size:12px;
+    border:1px solid var(--line); border-radius:8px; padding:10px; resize:vertical;
+    background:#f8fafc;
+  }
+  input[type=text], input[type=date], input[type=number]{
+    border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:12.5px; font-family:inherit;
+  }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px;}
+  button{
+    background:var(--accent); color:#fff; border:none; padding:9px 16px; border-radius:8px;
+    font-size:13px; cursor:pointer; font-weight:600;
+  }
+  button.secondary{ background:#e2e8f0; color:#1e293b;}
+  button.ghost{ background:transparent; color:var(--accent); border:1px solid var(--accent); }
+  button:hover{ filter:brightness(1.08);}
+  select{ padding:8px 10px; border-radius:8px; border:1px solid var(--line); font-size:13px;}
+  .msg{ font-size:12.5px; margin-top:8px; padding:8px 10px; border-radius:6px; }
+  .msg.ok{ background:#dcfce7; color:var(--ok);}
+  .msg.err{ background:#fee2e2; color:var(--warn);}
+  .msg.warn{ background:#fef3c7; color:#92400e;}
+  table{ border-collapse:collapse; width:100%; margin-top:14px; font-size:12.5px;}
+  th,td{ border:1px solid var(--line); padding:6px 8px; text-align:center;}
+  th{ background:#eef2ff; font-weight:600;}
+  td.first, th.first{ text-align:left; background:#f8fafc; font-weight:600;}
+  .total-row td, .total-col{ background:#f1f5f9; font-weight:700;}
+  .scroll{ overflow-x:auto; }
+  .hint{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5;}
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  @media (max-width:800px){ .grid2,.grid3{ grid-template-columns:1fr; } }
+  .example{ background:#0f172a; color:#e2e8f0; font-size:11px; padding:8px 10px; border-radius:6px; overflow-x:auto; margin-top:6px;}
+  .result-title{ margin-top:26px; font-size:14px; font-weight:700; color:#0f172a;}
+  .footer-note{ text-align:center; color:var(--muted); font-size:12px; margin-top:30px;}
+  .loc-dpto{ font-size:9.5px; color:var(--muted); font-weight:400; text-transform:uppercase; letter-spacing:.3px;}
+  .loc-prov{ font-size:10px; color:#334155; font-weight:500;}
+  .loc-lugar{ font-size:12.5px; font-weight:700;}
+
+  /* --- navegación por pestañas --- */
+  nav.tabs{ position:sticky; top:0; z-index:50; background:#0f172a; padding:0 20px; display:flex; gap:4px; overflow-x:auto; border-bottom:2px solid #1e293b;}
+  nav.tabs button{ background:transparent; color:#94a3b8; border:none; border-radius:8px 8px 0 0; padding:12px 16px; font-size:12.5px; font-weight:600; white-space:nowrap;}
+  nav.tabs button.active{ background:#f1f5f9; color:#0f172a; }
+  .tabpanel{ display:none; }
+  .tabpanel.active{ display:block; }
+
+  /* --- kpis --- */
+  .kpi{ background:#f8fafc; border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+  .kpi .num{ font-size:26px; font-weight:800; color:var(--accent); }
+  .kpi .lbl{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; }
+
+  .badge{ display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px; margin-right:6px; font-weight:600;}
+  .badge.ok{ background:#dcfce7; color:var(--ok);}
+  .badge.warn{ background:#fef3c7; color:#92400e;}
+  .badge.info{ background:#dbeafe; color:#1e3a8a;}
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; margin-top:8px;}
+  .legend span.sw{ display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:5px; vertical-align:middle;}
+
+  .chart-wrap{ display:flex; gap:24px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+
+  .factor-table td input{ width:70px; text-align:center;}
+
+  details.metabox summary{ cursor:pointer; font-weight:700; font-size:13.5px; color:#0f172a; padding:4px 0;}
+  .metagrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-top:10px;}
+  .metagrid label{ font-size:11.5px; color:var(--muted); display:block; margin-bottom:3px;}
+  .metagrid input{ width:100%; }
+
+  @media print{
+    .no-print{ display:none !important; }
+    nav.tabs{ display:none !important; }
+    .tabpanel{ display:block !important; }
+    body{ background:#fff; padding:0; }
+    header{ color:#0f172a; background:#fff; }
+    header p{ color:#475569; }
+    .card{ box-shadow:none; border:1px solid #ccc; page-break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding-left: 4px !important;">
+    <h1 style="margin: 0 !important;">Analizador matriz OD</h1>
+  </div>
+</header>
+
+
+<nav class="tabs no-print">
+  <button class="tab-btn active" data-tab="livianos">Pasajeros</button>
+  <button class="tab-btn" data-tab="pesados">Carga</button>
+  <button class="tab-btn" data-tab="consolidado">Consolidado</button>
+</nav>
+
+<div class="wrap">
+
+  <!-- ================= LIVIANOS ================= -->
+  <div class="tabpanel active" id="tab-livianos">
+    <div class="card">
+      <h2><span class="tag">LIVIANOS</span> Pegar datos de vehículos livianos</h2>
+      <textarea id="inputLiviano" placeholder="Pega aquí las filas de LIVIANOS copiadas de Excel..."></textarea>
+      <div class="row">
+        <button onclick="procesarLiviano()">Procesar Livianos</button>
+        <button class="secondary" onclick="limpiar('liviano')">Limpiar</button>
+      </div>
+      <div id="msgLiviano"></div>
+      <div id="resultLiviano"></div>
+    </div>
+  </div>
+
+  <!-- ================= PESADOS ================= -->
+  <div class="tabpanel" id="tab-pesados">
+    <div class="card">
+      <h2><span class="tag pesado">PESADOS</span> Pegar datos de vehículos pesados</h2>
+      <textarea id="inputPesado" placeholder="Pega aquí las filas de PESADOS copiadas de Excel..."></textarea>
+      <div class="row">
+        <button onclick="procesarPesado()">Procesar Pesados</button>
+        <button class="secondary" onclick="limpiar('pesado')">Limpiar</button>
+      </div>
+      <div id="msgPesado"></div>
+      <div id="resultPesado"></div>
+    </div>
+  </div>
+
+  <!-- ================= CONSOLIDADO ================= -->
+  <div class="tabpanel" id="tab-consolidado">
+    <div class="card">
+      <h2><span class="tag pro">PRO</span> Resumen </h2>
+      <div id="resultConsolidado"><p class="hint">Aún no hay datos procesados.</p></div>
+    </div>
+  </div>
+
+  <div class="footer-note"></div>
+</div>
+
+<script>
+// =====================================================================
+// ---------- utilidades base de parseo (formato Excel 3 líneas) ----------
+// =====================================================================
+function splitRecords(raw){
+  const lines = raw.split(/\r?\n/).map(l=>l.replace(/\s+$/,'')).filter(l=>l.trim().length>0);
+  const records = [];
+  for(let i=0;i+2<lines.length;i+=3){
+    records.push([lines[i], lines[i+1], lines[i+2]]);
+  }
+  return records;
+}
+function tok(line){
+  return line.split('\t').map(t=>t.trim()).filter(t=>t.length>0);
+}
+function tokRaw(line){
+  return line.split('\t').map(t=>t.trim()); // NO filtra vacíos: conserva la posición exacta de cada columna
+}
+function marcado(v){
+  return v === 'X' || v === '✔';
+}
+function safe(arr,i){ return arr[i] !== undefined ? arr[i] : ''; }
+function uniq(arr){ return [...new Set(arr)]; }
+function pct(n, total){
+  if(!total) return '0.00%';
+  return (n/total*100).toFixed(2)+'%';
+}
+
+function parseLiviano(raw){
+  const recs = splitRecords(raw);
+  const out = [];
+  let descartados = 0;
+  for(const [l1,l2,l3] of recs){
+    const tLugar = tok(l1); // ["Lugar",origLugar,"Lugar",destLugar]
+    const tData  = tok(l2);
+    const tDpto  = tok(l3);
+    const tRaw   = tokRaw(l2);
+    if(tData.length < 6){ descartados++; continue; }
+    const valido  = safe(tData, tData.length-1).toUpperCase();
+    const sentido = safe(tData, tData.length-2).toUpperCase();
+    const dia     = safe(tData, tData.length-3);
+    const peSG = marcado(safe(tRaw,17));
+    const peSW = marcado(safe(tRaw,18));
+    let motivo = '';
+    if(marcado(safe(tRaw,13))) motivo = 'T';
+    else if(marcado(safe(tRaw,14))) motivo = 'P';
+    else if(marcado(safe(tRaw,15))) motivo = 'E';
+    else if(marcado(safe(tRaw,16))) motivo = 'S';
+    out.push({
+      hora: safe(tData,0),
+      placa: safe(tData,1),
+      tipo: safe(tData,2).toUpperCase(),
+      marca: safe(tRaw,3).toUpperCase(),
+      modelo: safe(tRaw,4).toUpperCase(),
+      anio: safe(tRaw,5),
+      combustible: safe(tRaw,6).toUpperCase(),
+      origLugar: safe(tLugar,1), destLugar: safe(tLugar,3),
+      origProv:  safe(tData,10), destProv:  safe(tData,12),
+      origDpto:  safe(tDpto,1),  destDpto:  safe(tDpto,3),
+      dia, sentido, valido, motivo,
+      estacionPE: peSG ? 'PE-3SG' : (peSW ? 'PE-3SW' : '')
+    });
+  }
+  out._descartados = descartados;
+  out._totalGrupos = recs.length;
+  return out;
+}
+
+function parsePesado(raw){
+  const recs = splitRecords(raw);
+  const out = [];
+  let descartados = 0;
+  for(const [l1,l2,l3] of recs){
+    const tLugar = tok(l1);
+    const tData  = tok(l2);
+    const tDpto  = tok(l3);
+    const tRaw   = tokRaw(l2);
+    if(tData.length < 6){ descartados++; continue; }
+    const valido  = safe(tData, tData.length-1).toUpperCase();
+    const sentido = safe(tData, tData.length-2).toUpperCase();
+    const dia     = safe(tData, tData.length-3);
+    const peSG = marcado(safe(tRaw,19));
+    const peSW = marcado(safe(tRaw,20));
+    out.push({
+      hora: safe(tData,0),
+      placa: safe(tData,1),
+      tipo: safe(tData,2).toUpperCase(),
+      carroceria: safe(tRaw,3).toUpperCase(),
+      embalaje: safe(tRaw,4).toUpperCase(),
+      combustible: safe(tRaw,5).toUpperCase(),
+      producto: safe(tData,6).toUpperCase(),
+      origLugar: safe(tLugar,1), destLugar: safe(tLugar,3),
+      origProv:  safe(tData,8),  destProv:  safe(tData,10),
+      origDpto:  safe(tDpto,1),  destDpto:  safe(tDpto,3),
+      marca: safe(tRaw,14).toUpperCase(),
+      modelo: safe(tRaw,15).toUpperCase(),
+      anio: safe(tRaw,16),
+      dia, sentido, valido,
+      estacionPE: peSG ? 'PE-3SG' : (peSW ? 'PE-3SW' : '')
+    });
+  }
+  out._descartados = descartados;
+  out._totalGrupos = recs.length;
+  return out;
+}
+
+// =====================================================================
+// ---------- cuadro resumen (por sentido / día / tipo) ----------
+// =====================================================================
+function buildResumenLiviano(data){
+  const cats = uniq(data.map(d=>d.tipo)).filter(Boolean).sort();
+  const dias = uniq(data.map(d=>d.dia)).sort();
+  let rows = [];
+  for(const dia of dias){
+    for(const sentido of ["ENTRADA","SALIDA"]){
+      const subset = data.filter(d=>d.dia===dia && d.sentido===sentido);
+      if(subset.length===0) continue;
+      const row = {sentido,dia, TOTAL:subset.length};
+      for(const c of cats) row[c] = subset.filter(d=>d.tipo===c).length;
+      rows.push(row);
+    }
+  }
+  return {cats, rows};
+}
+function buildResumenPesado(data){
+  const cats = uniq(data.map(d=>d.tipo)).filter(Boolean).sort();
+  const dias = uniq(data.map(d=>d.dia)).sort();
+  let rows = [];
+  for(const dia of dias){
+    for(const sentido of ["ENTRADA","SALIDA"]){
+      const subset = data.filter(d=>d.dia===dia && d.sentido===sentido);
+      if(subset.length===0) continue;
+      const row = {sentido,dia, TOTAL:subset.length};
+      for(const c of cats) row[c] = subset.filter(d=>d.tipo===c).length;
+      rows.push(row);
+    }
+  }
+  return {catLabels: cats, rows};
+}
+function tablaResumenLiviano(res){
+  let h = '<div class="scroll"><table><tr><th class="first">SENTIDO</th><th class="first">DÍA</th>';
+  for(const c of res.cats) h += `<th>${c}</th>`;
+  h += '<th>TOTAL</th></tr>';
+  for(const r of res.rows){
+    h += `<tr><td class="first">${r.sentido}</td><td>${r.dia}</td>`;
+    for(const c of res.cats) h += `<td>${r[c]}</td>`;
+    h += `<td class="total-col">${r.TOTAL}</td></tr>`;
+  }
+  h += '</table></div>';
+  return h;
+}
+function tablaResumenPesado(res){
+  let h = '<div class="scroll"><table><tr><th class="first">SENTIDO</th><th class="first">DÍA</th>';
+  for(const c of res.catLabels) h += `<th>${c}</th>`;
+  h += '<th>TOTAL</th></tr>';
+  for(const r of res.rows){
+    h += `<tr><td class="first">${r.sentido}</td><td>${r.dia}</td>`;
+    for(const c of res.catLabels) h += `<td>${r[c]}</td>`;
+    h += `<td class="total-col">${r.TOTAL}</td></tr>`;
+  }
+  h += '</table></div>';
+  return h;
+}
+
+// =====================================================================
+// ---------- cuadro de encuestas por día y estación ----------
+// =====================================================================
+function getEstacion(d){
+  if(d.sentido === 'SALIDA') return d.origLugar || d.destLugar;
+  return d.destLugar || d.origLugar;
+}
+function buildEncuestasPorEstacion(data){
+  const estaciones = uniq(data.map(getEstacion)).filter(Boolean).sort();
+  const dias = uniq(data.map(d=>d.dia)).sort();
+  const matrix = {};
+  let total = 0;
+  for(const e of estaciones){
+    matrix[e] = {};
+    for(const dia of dias){
+      const n = data.filter(d=>getEstacion(d)===e && d.dia===dia).length;
+      matrix[e][dia] = n; total += n;
+    }
+  }
+  return {estaciones, dias, matrix, total};
+}
+function tablaEncuestasPorEstacion(res){
+  if(res.total===0) return `<p class="hint">Sin registros para generar el cuadro de encuestas por estación.</p>`;
+  const colTotals = {};
+  res.dias.forEach(dia=> colTotals[dia] = res.estaciones.reduce((s,e)=>s+res.matrix[e][dia],0));
+  let h = `<div class="scroll"><table>`;
+  h += `<tr><th class="first">ESTACIÓN</th>`;
+  res.dias.forEach(dia=> h += `<th>${dia}</th>`);
+  h += `<th>TOTAL</th></tr>`;
+  res.estaciones.forEach(e=>{
+    const rowTotal = res.dias.reduce((s,dia)=>s+res.matrix[e][dia],0);
+    h += `<tr><td class="first">${e}</td>`;
+    res.dias.forEach(dia=> h += `<td>${res.matrix[e][dia]}</td>`);
+    h += `<td class="total-col">${rowTotal}</td></tr>`;
+  });
+  h += `<tr class="total-row"><td class="first">TOTAL</td>`;
+  res.dias.forEach(dia=> h += `<td>${colTotals[dia]}</td>`);
+  h += `<td class="total-col">${res.total}</td></tr>`;
+  h += `</table></div>`;
+  return h;
+}
+
+// =====================================================================
+// ---------- validez de muestras por tipología ----------
+// =====================================================================
+function buildValidezPorTipo(data){
+  const cats = uniq(data.map(d=>d.tipo)).filter(Boolean).sort();
+  const rows = [];
+  let totVal=0, totInv=0, totSin=0;
+  for(const c of cats){
+    const subset = data.filter(d=>d.tipo===c);
+    const validas = subset.filter(d=>d.valido==='VALIDO').length;
+    const invalidas = subset.filter(d=>d.valido==='INVALIDO').length;
+    const sinDato = subset.length - validas - invalidas;
+    totVal += validas; totInv += invalidas; totSin += sinDato;
+    rows.push({tipo:c, validas, invalidas, sinDato, total:subset.length});
+  }
+  return {rows, totVal, totInv, totSin, total: data.length};
+}
+function tablaValidezPorTipo(res){
+  if(res.total===0) return `<p class="hint">Sin registros para generar el cuadro de validez.</p>`;
+  let h = `<div class="scroll"><table>`;
+  h += `<tr><th class="first">TIPO DE VEHÍCULO</th><th>VÁLIDAS</th><th>INVÁLIDAS</th><th>SIN DATO</th><th>TOTAL</th></tr>`;
+  res.rows.forEach(r=>{
+    h += `<tr><td class="first">${r.tipo}</td><td>${r.validas}</td><td>${r.invalidas}</td><td>${r.sinDato}</td><td class="total-col">${r.total}</td></tr>`;
+  });
+  h += `<tr class="total-row"><td class="first">TOTAL</td><td>${res.totVal}</td><td>${res.totInv}</td><td>${res.totSin}</td><td class="total-col">${res.total}</td></tr>`;
+  h += `</table></div>`;
+  return h;
+}
+
+// =====================================================================
+// ---------- tipo de vehículo por estación PE-3SG / PE-3SW ----------
+// =====================================================================
+function buildTipoPorEstacion(data, dia='__TOTAL__', sentido='__AMBOS__', valido='__TODOS__'){
+  let subset = data;
+  if(dia!=='__TOTAL__') subset = subset.filter(d=>String(d.dia)===String(dia));
+  if(sentido!=='__AMBOS__') subset = subset.filter(d=>d.sentido===sentido);
+  if(valido!=='__TODOS__') subset = subset.filter(d=>d.valido===valido);
+  const estaciones = ['PE-3SG','PE-3SW'];
+  const tipos = uniq(subset.map(d=>d.tipo)).filter(Boolean).sort();
+  const matrix = {};
+  let total = 0;
+  for(const t of tipos){
+    matrix[t] = {};
+    for(const e of estaciones){
+      const n = subset.filter(d=>d.tipo===t && d.estacionPE===e).length;
+      matrix[t][e] = n; total += n;
+    }
+  }
+  return {tipos, estaciones, matrix, total};
+}
+function selectorTipoEstacion(data, idPrefix){
+  return `
+    <div class="row">
+      <label style="font-size:13px;">Día:
+        <select id="${idPrefix}_te_dia" onchange="renderTipoEstacion('${idPrefix}')">
+          <option value="__TOTAL__">TOTAL</option>
+          ${uniq(data.map(d=>d.dia)).sort().map(d=>`<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </label>
+      <label style="font-size:13px;">Sentido:
+        <select id="${idPrefix}_te_sentido" onchange="renderTipoEstacion('${idPrefix}')">
+          <option value="__AMBOS__">AMBOS</option>
+          <option value="ENTRADA">ENTRADA</option>
+          <option value="SALIDA">SALIDA</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Validez:
+        <select id="${idPrefix}_te_valido" onchange="renderTipoEstacion('${idPrefix}')">
+          <option value="__TODOS__">AMBOS</option>
+          <option value="VALIDO">VALIDO</option>
+          <option value="INVALIDO">INVALIDO</option>
+        </select>
+      </label>
+    </div>
+    <div id="${idPrefix}_te"></div>
+  `;
+}
+function renderTipoEstacion(prefix){
+  const data = prefix==='liv' ? DATA_LIVIANO : DATA_PESADO;
+  const dia = document.getElementById(prefix+'_te_dia').value;
+  const sentido = document.getElementById(prefix+'_te_sentido').value;
+  const valido = document.getElementById(prefix+'_te_valido').value;
+  const res = buildTipoPorEstacion(data, dia, sentido, valido);
+  document.getElementById(prefix+'_te').innerHTML = tablaTipoPorEstacion(res);
+}
+function tablaTipoPorEstacion(res){
+  if(res.total===0) return `<p class="hint">Sin registros para generar el cuadro por estación.</p>`;
+  const colTotals = {};
+  res.estaciones.forEach(e=> colTotals[e] = res.tipos.reduce((s,t)=>s+res.matrix[t][e],0));
+  let h = `<div class="scroll"><table>`;
+  h += `<tr><th class="first" rowspan="2">TIPO</th>`;
+  res.estaciones.forEach(e=> h += `<th colspan="2">${e}</th>`);
+  h += `<th colspan="2">TOTAL</th></tr>`;
+  h += `<tr>`;
+  res.estaciones.forEach(()=> h += `<th>VEH.</th><th>%</th>`);
+  h += `<th>VEH.</th><th>%</th></tr>`;
+  res.tipos.forEach(t=>{
+    let rowTotal = 0;
+    h += `<tr><td class="first">${t}</td>`;
+    res.estaciones.forEach(e=>{
+      const n = res.matrix[t][e]; rowTotal += n;
+      h += `<td>${n ? n : ''}</td><td>${pct(n,res.total)}</td>`;
+    });
+    h += `<td class="total-col">${rowTotal}</td><td class="total-col">${pct(rowTotal,res.total)}</td></tr>`;
+  });
+  h += `<tr class="total-row"><td class="first">SUMA</td>`;
+  res.estaciones.forEach(e=> h += `<td>${colTotals[e]}</td><td>${pct(colTotals[e],res.total)}</td>`);
+  h += `<td class="total-col">${res.total}</td><td class="total-col">100.00%</td></tr>`;
+  h += `</table></div>`;
+  return h;
+}
+
+// =====================================================================
+// ---------- cuadro genérico: campo (carrocería/combustible/marca/año) por estación PE-3SG / PE-3SW ----------
+// =====================================================================
+function buildCampoPorEstacion(data, getCampo, dia='__TOTAL__', sentido='__AMBOS__', valido='__TODOS__'){
+  let subset = data;
+  if(dia!=='__TOTAL__') subset = subset.filter(d=>String(d.dia)===String(dia));
+  if(sentido!=='__AMBOS__') subset = subset.filter(d=>d.sentido===sentido);
+  if(valido!=='__TODOS__') subset = subset.filter(d=>d.valido===valido);
+  const estaciones = ['PE-3SG','PE-3SW'];
+  const items = uniq(subset.map(getCampo)).filter(Boolean).sort();
+  const matrix = {};
+  let total = 0;
+  for(const it of items){
+    matrix[it] = {};
+    for(const e of estaciones){
+      const n = subset.filter(d=>getCampo(d)===it && d.estacionPE===e).length;
+      matrix[it][e] = n; total += n;
+    }
+  }
+  return {items, estaciones, matrix, total};
+}
+function tablaCampoPorEstacion(res, etiqueta){
+  if(res.total===0) return `<p class="hint">Sin registros para generar el cuadro por ${etiqueta.toLowerCase()}.</p>`;
+  const colTotals = {};
+  res.estaciones.forEach(e=> colTotals[e] = res.items.reduce((s,it)=>s+res.matrix[it][e],0));
+  let h = `<div class="scroll"><table>`;
+  h += `<tr><th class="first" rowspan="2">${etiqueta.toUpperCase()}</th>`;
+  res.estaciones.forEach(e=> h += `<th colspan="2">${e}</th>`);
+  h += `<th colspan="2">TOTAL</th></tr>`;
+  h += `<tr>`;
+  res.estaciones.forEach(()=> h += `<th>VEH.</th><th>%</th>`);
+  h += `<th>VEH.</th><th>%</th></tr>`;
+  res.items.forEach(it=>{
+    let rowTotal = 0;
+    h += `<tr><td class="first">${it}</td>`;
+    res.estaciones.forEach(e=>{
+      const n = res.matrix[it][e]; rowTotal += n;
+      h += `<td>${n ? n : ''}</td><td>${pct(n,res.total)}</td>`;
+    });
+    h += `<td class="total-col">${rowTotal}</td><td class="total-col">${pct(rowTotal,res.total)}</td></tr>`;
+  });
+  h += `<tr class="total-row"><td class="first">SUMA</td>`;
+  res.estaciones.forEach(e=> h += `<td>${colTotals[e]}</td><td>${pct(colTotals[e],res.total)}</td>`);
+  h += `<td class="total-col">${res.total}</td><td class="total-col">100.00%</td></tr>`;
+  h += `</table></div>`;
+  return h;
+}
+const CAMPO_GETTERS = {
+  carroceria: d=>d.carroceria,
+  combustible: d=>d.combustible,
+  marca: d=>d.marca,
+  anio: d=>d.anio
+};
+const CAMPO_LABELS = {
+  carroceria: 'Carrocería',
+  combustible: 'Combustible',
+  marca: 'Marca',
+  anio: 'Año'
+};
+function selectorCampoEstacion(data, idPrefix, campo){
+  return `
+    <div class="row">
+      <label style="font-size:13px;">Día:
+        <select id="${idPrefix}_${campo}_dia" onchange="renderCampoEstacion('${idPrefix}','${campo}')">
+          <option value="__TOTAL__">TOTAL</option>
+          ${uniq(data.map(d=>d.dia)).sort().map(d=>`<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </label>
+      <label style="font-size:13px;">Sentido:
+        <select id="${idPrefix}_${campo}_sentido" onchange="renderCampoEstacion('${idPrefix}','${campo}')">
+          <option value="__AMBOS__">AMBOS</option>
+          <option value="ENTRADA">ENTRADA</option>
+          <option value="SALIDA">SALIDA</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Validez:
+        <select id="${idPrefix}_${campo}_valido" onchange="renderCampoEstacion('${idPrefix}','${campo}')">
+          <option value="__TODOS__">AMBOS</option>
+          <option value="VALIDO">VALIDO</option>
+          <option value="INVALIDO">INVALIDO</option>
+        </select>
+      </label>
+    </div>
+    <div id="${idPrefix}_${campo}_tbl"></div>
+  `;
+}
+function renderCampoEstacion(prefix, campo){
+  const data = prefix==='liv' ? DATA_LIVIANO : DATA_PESADO;
+  const dia = document.getElementById(`${prefix}_${campo}_dia`).value;
+  const sentido = document.getElementById(`${prefix}_${campo}_sentido`).value;
+  const valido = document.getElementById(`${prefix}_${campo}_valido`).value;
+  const res = buildCampoPorEstacion(data, CAMPO_GETTERS[campo], dia, sentido, valido);
+  document.getElementById(`${prefix}_${campo}_tbl`).innerHTML = tablaCampoPorEstacion(res, CAMPO_LABELS[campo]);
+}
+
+// =====================================================================
+// ---------- producto transportado por tipo (PESADOS) ----------
+// =====================================================================
+function buildProductoPorTipo(data, dia='__TOTAL__', sentido='__AMBOS__', valido='__TODOS__'){
+  let subset = data;
+  if(dia!=='__TOTAL__') subset = subset.filter(d=>String(d.dia)===String(dia));
+  if(sentido!=='__AMBOS__') subset = subset.filter(d=>d.sentido===sentido);
+  if(valido!=='__TODOS__') subset = subset.filter(d=>d.valido===valido);
+  const productos = uniq(subset.map(d=>d.producto)).filter(Boolean).sort();
+  const tipos = uniq(subset.map(d=>d.tipo)).filter(Boolean).sort();
+  const matrix = {};
+  let total = 0;
+  for(const p of productos){
+    matrix[p] = {};
+    for(const t of tipos){
+      const n = subset.filter(d=>d.producto===p && d.tipo===t).length;
+      matrix[p][t] = n; total += n;
+    }
+  }
+  return {productos, tipos, matrix, total};
+}
+function tablaProductoPorTipo(res){
+  if(res.total===0) return `<p class="hint">Sin registros para generar el cuadro de producto por tipo de vehículo.</p>`;
+  const colTotals = {};
+  res.tipos.forEach(t=> colTotals[t] = res.productos.reduce((s,p)=>s+res.matrix[p][t],0));
+  let h = `<div class="scroll"><table>`;
+  h += `<tr><th class="first" rowspan="2">PRODUCTO</th>`;
+  res.tipos.forEach(t=> h += `<th colspan="2">${t}</th>`);
+  h += `<th colspan="2">TOTAL</th></tr>`;
+  h += `<tr>`;
+  res.tipos.forEach(()=> h += `<th>VEH.</th><th>%</th>`);
+  h += `<th>VEH.</th><th>%</th></tr>`;
+  res.productos.forEach(p=>{
+    let rowTotal = 0;
+    h += `<tr><td class="first">${p}</td>`;
+    res.tipos.forEach(t=>{
+      const n = res.matrix[p][t]; rowTotal += n;
+      h += `<td>${n?n:''}</td><td>${pct(n,res.total)}</td>`;
+    });
+    h += `<td class="total-col">${rowTotal}</td><td class="total-col">${pct(rowTotal,res.total)}</td></tr>`;
+  });
+  h += `<tr class="total-row"><td class="first">SUMA</td>`;
+  res.tipos.forEach(t=> h += `<td>${colTotals[t]}</td><td>${pct(colTotals[t],res.total)}</td>`);
+  h += `<td class="total-col">${res.total}</td><td class="total-col">100.00%</td></tr>`;
+  h += `</table></div>`;
+  return h;
+}
+function selectorProductoTipo(data, idPrefix){
+  return `
+    <div class="row">
+      <label style="font-size:13px;">Día:
+        <select id="${idPrefix}_pt_dia" onchange="renderProductoTipo('${idPrefix}')">
+          <option value="__TOTAL__">TOTAL</option>
+          ${uniq(data.map(d=>d.dia)).sort().map(d=>`<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </label>
+      <label style="font-size:13px;">Sentido:
+        <select id="${idPrefix}_pt_sentido" onchange="renderProductoTipo('${idPrefix}')">
+          <option value="__AMBOS__">AMBOS</option>
+          <option value="ENTRADA">ENTRADA</option>
+          <option value="SALIDA">SALIDA</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Validez:
+        <select id="${idPrefix}_pt_valido" onchange="renderProductoTipo('${idPrefix}')">
+          <option value="__TODOS__">AMBOS</option>
+          <option value="VALIDO">VALIDO</option>
+          <option value="INVALIDO">INVALIDO</option>
+        </select>
+      </label>
+    </div>
+    <div id="${idPrefix}_pt"></div>
+  `;
+}
+function renderProductoTipo(prefix){
+  const data = prefix==='liv' ? DATA_LIVIANO : DATA_PESADO;
+  const dia = document.getElementById(prefix+'_pt_dia').value;
+  const sentido = document.getElementById(prefix+'_pt_sentido').value;
+  const valido = document.getElementById(prefix+'_pt_valido').value;
+  const res = buildProductoPorTipo(data, dia, sentido, valido);
+  document.getElementById(prefix+'_pt').innerHTML = tablaProductoPorTipo(res);
+}
+
+// =====================================================================
+// ---------- motivo de viaje T/P/E/S por tipo (LIVIANOS) ----------
+// =====================================================================
+function buildMotivoPorTipo(data, dia='__TOTAL__', sentido='__AMBOS__', valido='__TODOS__'){
+  let subset = data;
+  if(dia!=='__TOTAL__') subset = subset.filter(d=>String(d.dia)===String(dia));
+  if(sentido!=='__AMBOS__') subset = subset.filter(d=>d.sentido===sentido);
+  if(valido!=='__TODOS__') subset = subset.filter(d=>d.valido===valido);
+  const motivos = ['T','P','E','S'];
+  const motivoLabels = {T:'T (Trabajo)', P:'P (Paseo)', E:'E (Estudio)', S:'S (Salud)'};
+  const tipos = uniq(subset.map(d=>d.tipo)).filter(Boolean).sort();
+  const matrix = {};
+  let total = 0;
+  for(const m of motivos){
+    matrix[m] = {};
+    for(const t of tipos){
+      const n = subset.filter(d=>d.motivo===m && d.tipo===t).length;
+      matrix[m][t] = n; total += n;
+    }
+  }
+  return {motivos, motivoLabels, tipos, matrix, total};
+}
+function tablaMotivoPorTipo(res){
+  if(res.total===0) return `<p class="hint">Sin registros para generar el cuadro de motivo de viaje por tipo de vehículo.</p>`;
+  const colTotals = {};
+  res.tipos.forEach(t=> colTotals[t] = res.motivos.reduce((s,m)=>s+res.matrix[m][t],0));
+  let h = `<div class="scroll"><table>`;
+  h += `<tr><th class="first" rowspan="2">MOTIVO DE VIAJE</th>`;
+  res.tipos.forEach(t=> h += `<th colspan="2">${t}</th>`);
+  h += `<th colspan="2">TOTAL</th></tr>`;
+  h += `<tr>`;
+  res.tipos.forEach(()=> h += `<th>VEH.</th><th>%</th>`);
+  h += `<th>VEH.</th><th>%</th></tr>`;
+  res.motivos.forEach(m=>{
+    let rowTotal = 0;
+    h += `<tr><td class="first">${res.motivoLabels[m]}</td>`;
+    res.tipos.forEach(t=>{
+      const n = res.matrix[m][t]; rowTotal += n;
+      h += `<td>${n?n:''}</td><td>${pct(n,res.total)}</td>`;
+    });
+    h += `<td class="total-col">${rowTotal}</td><td class="total-col">${pct(rowTotal,res.total)}</td></tr>`;
+  });
+  h += `<tr class="total-row"><td class="first">SUMA</td>`;
+  res.tipos.forEach(t=> h += `<td>${colTotals[t]}</td><td>${pct(colTotals[t],res.total)}</td>`);
+  h += `<td class="total-col">${res.total}</td><td class="total-col">100.00%</td></tr>`;
+  h += `</table></div>`;
+  return h;
+}
+function selectorMotivoTipo(data, idPrefix){
+  return `
+    <div class="row">
+      <label style="font-size:13px;">Día:
+        <select id="${idPrefix}_mt_dia" onchange="renderMotivoTipo('${idPrefix}')">
+          <option value="__TOTAL__">TOTAL</option>
+          ${uniq(data.map(d=>d.dia)).sort().map(d=>`<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </label>
+      <label style="font-size:13px;">Sentido:
+        <select id="${idPrefix}_mt_sentido" onchange="renderMotivoTipo('${idPrefix}')">
+          <option value="__AMBOS__">AMBOS</option>
+          <option value="ENTRADA">ENTRADA</option>
+          <option value="SALIDA">SALIDA</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Validez:
+        <select id="${idPrefix}_mt_valido" onchange="renderMotivoTipo('${idPrefix}')">
+          <option value="__TODOS__">AMBOS</option>
+          <option value="VALIDO">VALIDO</option>
+          <option value="INVALIDO">INVALIDO</option>
+        </select>
+      </label>
+    </div>
+    <div id="${idPrefix}_mt"></div>
+  `;
+}
+function renderMotivoTipo(prefix){
+  const data = prefix==='liv' ? DATA_LIVIANO : DATA_PESADO;
+  const dia = document.getElementById(prefix+'_mt_dia').value;
+  const sentido = document.getElementById(prefix+'_mt_sentido').value;
+  const valido = document.getElementById(prefix+'_mt_valido').value;
+  const res = buildMotivoPorTipo(data, dia, sentido, valido);
+  document.getElementById(prefix+'_mt').innerHTML = tablaMotivoPorTipo(res);
+}
+
+// =====================================================================
+// ---------- matriz Origen - Destino ----------
+// =====================================================================
+function buildMatriz(data, tipo, nivel, dia='__TOTAL__', sentido='__AMBOS__', valido='__TODOS__'){
+  let subset = tipo === '__TODOS__' ? data : data.filter(d=>d.tipo===tipo);
+  if(dia!=='__TOTAL__') subset=subset.filter(d=>String(d.dia)===String(dia));
+  if(sentido!=='__AMBOS__') subset=subset.filter(d=>d.sentido===sentido);
+  if(valido!=='__TODOS__') subset=subset.filter(d=>d.valido===valido);
+  let getOrigKey, getDestKey;
+  if(nivel === 'completo'){
+    getOrigKey = d => [d.origDpto, d.origProv, d.origLugar].join('|||');
+    getDestKey = d => [d.destDpto, d.destProv, d.destLugar].join('|||');
+  } else if(nivel === 'dpto'){
+    getOrigKey = d => d.origDpto;
+    getDestKey = d => d.destDpto;
+  } else if(nivel === 'prov'){
+    getOrigKey = d => d.origProv;
+    getDestKey = d => d.destProv;
+  } else {
+    getOrigKey = d => d.origLugar;
+    getDestKey = d => d.destLugar;
+  }
+  const hasContent = k => k.split('|||').some(p => p && p.trim().length>0);
+  const origenes = uniq(subset.map(getOrigKey)).filter(hasContent).sort();
+  const destinos  = uniq(subset.map(getDestKey)).filter(hasContent).sort();
+  const matrix = {};
+  let total = 0;
+  for(const o of origenes){
+    matrix[o] = {};
+    for(const d of destinos){
+      const n = subset.filter(x=>getOrigKey(x)===o && getDestKey(x)===d).length;
+      matrix[o][d] = n; total += n;
+    }
+  }
+  return {origenes, destinos, matrix, total, nivel};
+}
+function keyParts(key, nivel){
+  if(nivel === 'completo'){
+    const [dpto, prov, lugar] = key.split('|||');
+    return {dpto: dpto||'', prov: prov||'', lugar: lugar||''};
+  }
+  if(nivel === 'dpto'){
+    return {dpto: key};
+  }
+  if(nivel === 'prov'){
+    return {prov: key};
+  }
+  return {lugar: key};
+}
+function headerLabel(key, nivel){
+  if(nivel === 'completo'){
+    const p = keyParts(key, nivel);
+    return `<div class="loc-dpto">${p.dpto}</div><div class="loc-prov">${p.prov}</div><div class="loc-lugar">${p.lugar}</div>`;
+  }
+  return key;
+}
+function tablaMatriz(m, titulo, nivel){
+  if(m.total===0){
+    return `<p class="hint">Sin registros para esta selección.</p>`;
+  }
+  if(nivel === 'completo'){
+    return tablaMatrizCompleta(m);
+  }
+  const colTotals = {};
+  m.destinos.forEach(d=> colTotals[d] = m.origenes.reduce((s,o)=>s+m.matrix[o][d],0));
+  const esquina = nivel === 'dpto' ? 'DEPARTAMENTO (ORIGEN \\ DESTINO)'
+    : nivel === 'prov' ? 'PROVINCIA (ORIGEN \\ DESTINO)'
+    : 'ORIGEN \\ DESTINO';
+  let h = `<div class="scroll"><table>`;
+  h += `<tr><th class="first">${esquina}</th>`;
+  m.destinos.forEach(d=> h += `<th>${d}</th>`);
+  h += `<th>TOTAL</th></tr>`;
+  m.origenes.forEach(o=>{
+    const rowTotal = m.destinos.reduce((s,d)=>s+m.matrix[o][d],0);
+    h += `<tr><td class="first">${o}</td>`;
+    m.destinos.forEach(d=> h += `<td>${m.matrix[o][d]}</td>`);
+    h += `<td class="total-col">${rowTotal}</td></tr>`;
+  });
+  h += `<tr class="total-row"><td class="first">TOTAL</td>`;
+  m.destinos.forEach(d=> h += `<td>${colTotals[d]}</td>`);
+  h += `<td class="total-col">${m.total}</td></tr>`;
+  h += `<tr class="total-row"><td class="first">PARTICIPACIÓN %</td>`;
+  m.destinos.forEach(d=> h += `<td>${(colTotals[d]/m.total*100).toFixed(1)}%</td>`);
+  h += `<td class="total-col">100.0%</td></tr>`;
+  h += `</table></div>`;
+  return h;
+}
+function tablaMatrizCompleta(m){
+  const colTotals = {};
+  m.destinos.forEach(d=> colTotals[d] = m.origenes.reduce((s,o)=>s+m.matrix[o][d],0));
+  const destParts = m.destinos.map(d=>keyParts(d,'completo'));
+  const origParts = m.origenes.map(o=>keyParts(o,'completo'));
+
+  let h = `<div class="scroll"><table>`;
+  h += `<tr>`;
+  h += `<th class="first" rowspan="3">DEPARTAMENTO</th>`;
+  h += `<th class="first" rowspan="3">PROVINCIA</th>`;
+  h += `<th class="first" rowspan="3">LUGAR (ORIGEN \\ DESTINO)</th>`;
+  destParts.forEach(p=> h += `<th>${p.dpto}</th>`);
+  h += `<th rowspan="3">TOTAL</th>`;
+  h += `</tr>`;
+
+  h += `<tr>`;
+  destParts.forEach(p=> h += `<th>${p.prov}</th>`);
+  h += `</tr>`;
+
+  h += `<tr>`;
+  destParts.forEach(p=> h += `<th>${p.lugar}</th>`);
+  h += `</tr>`;
+
+  m.origenes.forEach((o,i)=>{
+    const p = origParts[i];
+    const rowTotal = m.destinos.reduce((s,d)=>s+m.matrix[o][d],0);
+    h += `<tr><td class="first">${p.dpto}</td><td class="first">${p.prov}</td><td class="first">${p.lugar}</td>`;
+    m.destinos.forEach(d=> h += `<td>${m.matrix[o][d]}</td>`);
+    h += `<td class="total-col">${rowTotal}</td></tr>`;
+  });
+
+  h += `<tr class="total-row"><td class="first" colspan="3">TOTAL</td>`;
+  m.destinos.forEach(d=> h += `<td>${colTotals[d]}</td>`);
+  h += `<td class="total-col">${m.total}</td></tr>`;
+
+  h += `<tr class="total-row"><td class="first" colspan="3">PARTICIPACIÓN %</td>`;
+  m.destinos.forEach(d=> h += `<td>${(colTotals[d]/m.total*100).toFixed(1)}%</td>`);
+  h += `<td class="total-col">100.0%</td></tr>`;
+
+  h += `</table></div>`;
+  return h;
+}
+function selectorTipos(data, idPrefix){
+  const tipos = uniq(data.map(d=>d.tipo)).filter(Boolean).sort();
+  let opts = `<option value="__TODOS__">TODOS los tipos</option>`;
+  tipos.forEach(t=> opts += `<option value="${t}">${t}</option>`);
+  return `
+    <div class="row">
+      <label style="font-size:13px;">Tipo de vehículo:
+        <select id="${idPrefix}_tipo" onchange="renderOD('${idPrefix}')">${opts}</select>
+      </label>
+      <label style="font-size:13px;">Nivel:
+        <select id="${idPrefix}_nivel" onchange="renderOD('${idPrefix}')">
+          <option value="lugar">Lugar / Distrito (Modelo 1)</option>
+          <option value="completo">Distrito + Provincia + Departamento (Modelo 2)</option>
+          <option value="dpto">Solo Departamento (Modelo 3)</option>
+          <option value="prov">Solo Provincia (Modelo 4)</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Día:
+        <select id="${idPrefix}_dia" onchange="renderOD('${idPrefix}')">
+          <option value="__TOTAL__">TOTAL</option>
+          ${uniq(data.map(d=>d.dia)).sort().map(d=>`<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </label>
+      <label style="font-size:13px;">Sentido:
+        <select id="${idPrefix}_sentido" onchange="renderOD('${idPrefix}')">
+          <option value="__AMBOS__">AMBOS</option>
+          <option value="ENTRADA">ENTRADA</option>
+          <option value="SALIDA">SALIDA</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Validez:
+        <select id="${idPrefix}_valido" onchange="renderOD('${idPrefix}')">
+          <option value="__TODOS__">AMBOS</option>
+          <option value="VALIDO">VALIDO</option>
+          <option value="INVALIDO">INVALIDO</option>
+        </select>
+      </label>
+    </div>
+    <div id="${idPrefix}_od"></div>
+  `;
+}
+function renderOD(prefix){
+  const data = prefix==='liv' ? DATA_LIVIANO : DATA_PESADO;
+  const tipo = document.getElementById(prefix+'_tipo').value;
+  const nivel = document.getElementById(prefix+'_nivel').value;
+  const dia=document.getElementById(prefix+'_dia').value;
+  const sentido=document.getElementById(prefix+'_sentido').value;
+  const valido=document.getElementById(prefix+'_valido').value;
+  const m = buildMatriz(data, tipo, nivel,dia,sentido,valido);
+  const label = tipo==='__TODOS__' ? 'todos los tipos' : tipo;
+  const nivelLabel = nivel==='completo' ? 'por Distrito, Provincia y Departamento (Modelo 2)'
+    : nivel==='dpto' ? 'por Departamento (Modelo 3)'
+    : nivel==='prov' ? 'por Provincia (Modelo 4)'
+    : 'por Lugar (Modelo 1)';
+  document.getElementById(prefix+'_od').innerHTML =
+    `<div class="result-title">Matriz Origen-Destino de pasajeros (${label}) — ${nivelLabel}</div>` +
+    tablaMatriz(m, label, nivel);
+}
+
+// =====================================================================
+// ---------- gráficos SVG livianos (sin librerías externas) ----------
+// =====================================================================
+function svgBarChart(labels, series, opts={}){
+  const w = opts.width||860, h=opts.height||240, padL=42,padB=32,padT=16,padR=12;
+  const plotW = w-padL-padR, plotH = h-padT-padB;
+  const maxV = Math.max(1, ...series.flatMap(s=>s.values));
+  const n = Math.max(1,labels.length);
+  const groupW = plotW/n;
+  const barW = (groupW*0.72)/Math.max(1,series.length);
+  let grid='';
+  for(let g=0; g<=4; g++){
+    const val = Math.round(maxV*g/4);
+    const y = padT+plotH-(plotH*g/4);
+    grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${w-padR}" y2="${y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`;
+    grid += `<text x="${padL-6}" y="${(y+3).toFixed(1)}" font-size="9" text-anchor="end" fill="#94a3b8">${val}</text>`;
+  }
+  let bars='';
+  labels.forEach((lab,i)=>{
+    series.forEach((s,si)=>{
+      const v = s.values[i]||0;
+      const bh = plotH*(v/maxV);
+      const x = padL + i*groupW + groupW*0.14 + si*barW;
+      const y = padT+plotH-bh;
+      bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(barW*0.86).toFixed(1)}" height="${bh.toFixed(1)}" fill="${s.color}" rx="2"><title>${lab} — ${s.name}: ${v}</title></rect>`;
+    });
+  });
+  let axisLabels='';
+  labels.forEach((lab,i)=>{
+    const x = padL+i*groupW+groupW/2;
+    axisLabels += `<text x="${x.toFixed(1)}" y="${h-padB+16}" font-size="9" text-anchor="middle" fill="#475569">${lab}</text>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;max-width:${w}px;">${grid}${bars}${axisLabels}</svg>`;
+}
+function svgDonut(segments){
+  const w=220,h=220,r=88,cx=110,cy=110, r2=52;
+  const total = segments.reduce((s,x)=>s+x.value,0)||1;
+  let angleStart=-90, paths='';
+  segments.forEach(seg=>{
+    if(seg.value<=0) return;
+    const angle = seg.value/total*360;
+    const angleEnd = angleStart+angle;
+    const large = angle>180?1:0;
+    const x1=cx+r*Math.cos(angleStart*Math.PI/180), y1=cy+r*Math.sin(angleStart*Math.PI/180);
+    const x2=cx+r*Math.cos(angleEnd*Math.PI/180), y2=cy+r*Math.sin(angleEnd*Math.PI/180);
+    paths += `<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${seg.color}"><title>${seg.label}: ${seg.value} (${(seg.value/total*100).toFixed(1)}%)</title></path>`;
+    angleStart = angleEnd;
+  });
+  paths += `<circle cx="${cx}" cy="${cy}" r="${r2}" fill="#fff"/>`;
+  paths += `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="19" font-weight="800" fill="#0f172a">${total}</text>`;
+  paths += `<text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="9.5" fill="#64748b">VEH. TOTAL</text>`;
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:200px;height:200px;">${paths}</svg>`;
+}
+function svgLegend(segments){
+  return `<div class="legend">${segments.map(s=>`<span><span class="sw" style="background:${s.color}"></span>${s.label}: <b>${s.value}</b> (${(s.value/Math.max(1,segments.reduce((a,x)=>a+x.value,0))*100).toFixed(1)}%)</span>`).join('')}</div>`;
+}
+
+// =====================================================================
+// ---------- control de calidad de datos ----------
+// =====================================================================
+function panelCalidad(data, tipoLabel){
+  const validos = data.length;
+  const descartados = data._descartados||0;
+  const totalGrupos = data._totalGrupos||validos;
+  const sinHora = data.filter(d=>parseHoraToHour(d.hora)===null).length;
+  const sinTipo = data.filter(d=>!d.tipo).length;
+  const sinDia = data.filter(d=>!d.dia).length;
+  let alerts = '';
+  if(descartados>0) alerts += `<span class="badge warn">${descartados} bloque(s) descartado(s) por formato incompleto</span>`;
+  if(sinHora>0) alerts += `<span class="badge warn">${sinHora} sin hora reconocible</span>`;
+  if(sinTipo>0) alerts += `<span class="badge warn">${sinTipo} sin tipo de vehículo</span>`;
+  if(sinDia>0) alerts += `<span class="badge warn">${sinDia} sin día asignado</span>`;
+  if(!alerts) alerts = `<span class="badge ok">Datos consistentes, sin observaciones</span>`;
+  return `
+    <div class="row" style="margin-top:2px;">
+      <span class="badge info">${totalGrupos} bloque(s) leídos</span>
+      <span class="badge ok">${validos} registro(s) válidos de ${tipoLabel}</span>
+      ${alerts}
+    </div>`;
+}
+
+// =====================================================================
+// ---------- PRO 1: Volúmenes horarios / Hora de Máxima Demanda ----------
+// =====================================================================
+function parseHoraToHour(horaStr){
+  if(!horaStr) return null;
+  const m = String(horaStr).match(/^(\d{1,2}):(\d{2})/);
+  if(!m) return null;
+  const hh = parseInt(m[1],10);
+  if(isNaN(hh)||hh<0||hh>23) return null;
+  return hh;
+}
+function parseHoraToMinutes(horaStr){
+  if(!horaStr) return null;
+  const m = String(horaStr).match(/^(\d{1,2}):(\d{2})/);
+  if(!m) return null;
+  const hh = parseInt(m[1],10), mm = parseInt(m[2],10);
+  if(isNaN(hh)||isNaN(mm)) return null;
+  return hh*60+mm;
+}
+function buildVolumenHorario(data){
+  const dias = uniq(data.map(d=>d.dia)).filter(Boolean).sort();
+  const horas = [...Array(24).keys()];
+  const matrix = {};
+  horas.forEach(h=>{ matrix[h]={}; dias.forEach(d=>matrix[h][d]=0); });
+  let sinHora=0;
+  data.forEach(d=>{
+    const h = parseHoraToHour(d.hora);
+    if(h===null){ sinHora++; return; }
+    if(matrix[h][d.dia]===undefined) matrix[h][d.dia]=0;
+    matrix[h][d.dia]++;
+  });
+  return {horas, dias, matrix, sinHora, total:data.length-sinHora};
+}
+function calcularHoraPunta(data){
+  const conMin = data.map(d=>({min:parseHoraToMinutes(d.hora), dia:d.dia})).filter(x=>x.min!==null);
+  if(conMin.length===0) return null;
+  let best = null;
+  const dias = uniq(conMin.map(x=>x.dia));
+  dias.forEach(dia=>{
+    const minutos = conMin.filter(x=>x.dia===dia).map(x=>x.min);
+    for(let startH=0; startH<24; startH++){
+      const startMin = startH*60, endMin = startMin+60;
+      const count = minutos.filter(m=>m>=startMin && m<endMin).length;
+      if(!best || count>best.volumen) best = {dia, horaInicio:startH, volumen:count};
+    }
+  });
+  if(!best || best.volumen===0) return best;
+  const minutosPeak = conMin.filter(x=>x.dia===best.dia).map(x=>x.min);
+  const startMin = best.horaInicio*60;
+  const bins=[0,0,0,0];
+  minutosPeak.forEach(m=>{
+    if(m>=startMin && m<startMin+60){
+      const idx = Math.min(3,Math.floor((m-startMin)/15));
+      bins[idx]++;
+    }
+  });
+  const maxBin = Math.max(...bins);
+  const fhmd = (best.volumen>0 && maxBin>0) ? (best.volumen/(4*maxBin)) : null;
+  return {...best, fhmd, bins};
+}
+// =====================================================================
+// ---------- PRO 2: Consolidado / Resumen Ejecutivo ----------
+// =====================================================================
+function renderConsolidado(){
+  if(DATA_LIVIANO.length===0 && DATA_PESADO.length===0){
+    document.getElementById('resultConsolidado').innerHTML = `<p class="hint">Aún no hay datos procesados.</p>`;
+    return;
+  }
+  const totalLiv = DATA_LIVIANO.length, totalPes = DATA_PESADO.length;
+  const total = totalLiv+totalPes;
+  const dias = uniq([...DATA_LIVIANO.map(d=>d.dia), ...DATA_PESADO.map(d=>d.dia)]).filter(Boolean).sort();
+
+  const filasDia = dias.map(dia=>{
+    const nLiv = DATA_LIVIANO.filter(d=>d.dia===dia).length;
+    const nPes = DATA_PESADO.filter(d=>d.dia===dia).length;
+    return {dia, nLiv, nPes, total:nLiv+nPes};
+  });
+
+  const segments = [
+    {label:'Livianos', value: totalLiv, color:'#1d4ed8'},
+    {label:'Pesados', value: totalPes, color:'#b45309'}
+  ];
+
+  let tablaDia = `<div class="scroll"><table><tr><th class="first">DÍA</th><th>LIVIANOS</th><th>PESADOS</th><th>TOTAL</th><th>% PESADOS</th></tr>`;
+  filasDia.forEach(f=>{
+    tablaDia += `<tr><td class="first">${f.dia}</td><td>${f.nLiv}</td><td>${f.nPes}</td><td class="total-col">${f.total}</td><td>${pct(f.nPes,f.total)}</td></tr>`;
+  });
+  tablaDia += `<tr class="total-row"><td class="first">TOTAL</td><td>${totalLiv}</td><td>${totalPes}</td><td class="total-col">${total}</td><td>${pct(totalPes,total)}</td></tr>`;
+  tablaDia += `</table></div>`;
+
+  // Top categorías combinadas
+  const catCounts = {};
+  DATA_LIVIANO.forEach(d=>{ if(d.tipo) catCounts[d.tipo]=(catCounts[d.tipo]||0)+1; });
+  DATA_PESADO.forEach(d=>{ if(d.tipo) catCounts[d.tipo]=(catCounts[d.tipo]||0)+1; });
+  const catRows = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
+  let tablaCat = `<div class="scroll"><table><tr><th class="first">TIPO DE VEHÍCULO</th><th>N° VEHÍCULOS</th><th>% DEL TOTAL</th></tr>`;
+  catRows.forEach(([tipo,n])=>{
+    tablaCat += `<tr><td class="first">${tipo}</td><td>${n}</td><td>${pct(n,total)}</td></tr>`;
+  });
+  tablaCat += `<tr class="total-row"><td class="first">TOTAL</td><td>${total}</td><td>100.00%</td></tr></table></div>`;
+
+  document.getElementById('resultConsolidado').innerHTML = `
+    <div class="grid3">
+      <div class="kpi"><div class="num">${total}</div><div class="lbl">Total vehículos encuestados</div></div>
+      <div class="kpi"><div class="num">${pct(totalLiv,total)}</div><div class="lbl">Participación livianos</div></div>
+      <div class="kpi"><div class="num">${pct(totalPes,total)}</div><div class="lbl">Participación pesados</div></div>
+    </div>
+    <div class="result-title">Composición vehicular general</div>
+    <div class="chart-wrap">${svgDonut(segments)}${svgLegend(segments)}</div>
+    <div class="result-title">Totales por día de conteo</div>
+    ${tablaDia}
+    <div class="result-title">Composición por tipo de vehículo (livianos + pesados)</div>
+    ${tablaCat}
+    <div class="result-title">Matriz Origen-Destino consolidada (Livianos + Pesados)</div>
+    ${selectorMatrizConsolidado()}
+    <div class="result-title">Calidad de datos</div>
+    ${panelCalidad(DATA_LIVIANO,'LIVIANOS')}
+    ${panelCalidad(DATA_PESADO,'PESADOS')}
+  `;
+  renderConsolidadoOD();
+}
+
+// =====================================================================
+// ---------- Matriz Origen-Destino consolidada (Livianos + Pesados) ----------
+// =====================================================================
+function selectorMatrizConsolidado(){
+  const data = [...DATA_LIVIANO, ...DATA_PESADO];
+  return `
+    <div class="row">
+      <label style="font-size:13px;">Nivel:
+        <select id="cons_nivel" onchange="renderConsolidadoOD()">
+          <option value="lugar">Lugar / Distrito (Modelo 1)</option>
+          <option value="completo">Distrito + Provincia + Departamento (Modelo 2)</option>
+          <option value="dpto">Solo Departamento (Modelo 3)</option>
+          <option value="prov">Solo Provincia (Modelo 4)</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Día:
+        <select id="cons_dia" onchange="renderConsolidadoOD()">
+          <option value="__TOTAL__">TOTAL</option>
+          ${uniq(data.map(d=>d.dia)).sort().map(d=>`<option value="${d}">${d}</option>`).join('')}
+        </select>
+      </label>
+      <label style="font-size:13px;">Sentido:
+        <select id="cons_sentido" onchange="renderConsolidadoOD()">
+          <option value="__AMBOS__">AMBOS</option>
+          <option value="ENTRADA">ENTRADA</option>
+          <option value="SALIDA">SALIDA</option>
+        </select>
+      </label>
+      <label style="font-size:13px;">Validez:
+        <select id="cons_valido" onchange="renderConsolidadoOD()">
+          <option value="__TODOS__">AMBOS</option>
+          <option value="VALIDO">VALIDO</option>
+          <option value="INVALIDO">INVALIDO</option>
+        </select>
+      </label>
+    </div>
+    <div id="cons_od"></div>
+  `;
+}
+function renderConsolidadoOD(){
+  if(!document.getElementById('cons_nivel')) return;
+  const data = [...DATA_LIVIANO, ...DATA_PESADO];
+  const nivel = document.getElementById('cons_nivel').value;
+  const dia = document.getElementById('cons_dia').value;
+  const sentido = document.getElementById('cons_sentido').value;
+  const valido = document.getElementById('cons_valido').value;
+  const m = buildMatriz(data, '__TODOS__', nivel, dia, sentido, valido);
+  const nivelLabel = nivel==='completo' ? 'por Distrito, Provincia y Departamento (Modelo 2)'
+    : nivel==='dpto' ? 'por Departamento (Modelo 3)'
+    : nivel==='prov' ? 'por Provincia (Modelo 4)'
+    : 'por Lugar (Modelo 1)';
+  document.getElementById('cons_od').innerHTML =
+    `<div class="result-title">Matriz Origen-Destino consolidada (Livianos + Pesados) — ${nivelLabel}</div>` +
+    tablaMatriz(m, 'consolidado', nivel);
+}
+
+// =====================================================================
+// ---------- estado global y flujo principal ----------
+// =====================================================================
+let DATA_LIVIANO = [];
+let DATA_PESADO = [];
+
+function procesarLiviano(){
+  const raw = document.getElementById('inputLiviano').value;
+  if(!raw.trim()){ msg('Liviano','Pega datos antes de procesar.', 'err'); return; }
+  DATA_LIVIANO = parseLiviano(raw);
+  if(DATA_LIVIANO.length===0){ msg('Liviano','No se pudieron detectar registros. Revisa el formato (3 líneas por registro).', 'err'); return; }
+  const tipo = DATA_LIVIANO._descartados>0 ? 'warn' : 'ok';
+  msg('Liviano', `${DATA_LIVIANO.length} registro(s) procesado(s) correctamente` + (DATA_LIVIANO._descartados>0 ? ` — ${DATA_LIVIANO._descartados} bloque(s) descartado(s) por formato.` : '.'), tipo);
+  const res = buildResumenLiviano(DATA_LIVIANO);
+  const resEst = buildEncuestasPorEstacion(DATA_LIVIANO);
+  const resVal = buildValidezPorTipo(DATA_LIVIANO);
+  document.getElementById('resultLiviano').innerHTML =
+    panelCalidad(DATA_LIVIANO,'livianos') +
+    `<div class="result-title">Tabla de vehículos livianos</div>` + tablaResumenLiviano(res) +
+    `<div class="result-title">Total de encuestas por día según estación</div>` + tablaEncuestasPorEstacion(resEst) +
+    `<div class="result-title">Muestras válidas e inválidas por tipología vehicular</div>` + tablaValidezPorTipo(resVal) +
+    `<div class="result-title">Tipo de vehículo por estación</div>` + selectorTipoEstacion(DATA_LIVIANO,'liv') +
+    `<div class="result-title">Marca por estación (PE-3SG / PE-3SW)</div>` + selectorCampoEstacion(DATA_LIVIANO,'liv','marca') +
+    `<div class="result-title">Año por estación (PE-3SG / PE-3SW)</div>` + selectorCampoEstacion(DATA_LIVIANO,'liv','anio') +
+    `<div class="result-title">Combustible por estación (PE-3SG / PE-3SW)</div>` + selectorCampoEstacion(DATA_LIVIANO,'liv','combustible') +
+    `<div class="result-title">Motivo de viaje por tipo de vehículo</div>` + selectorMotivoTipo(DATA_LIVIANO,'liv') +
+    `<div class="result-title">Matriz Origen-Destino</div>` + selectorTipos(DATA_LIVIANO,'liv');
+  renderTipoEstacion('liv');
+  renderCampoEstacion('liv','marca');
+  renderCampoEstacion('liv','anio');
+  renderCampoEstacion('liv','combustible');
+  renderMotivoTipo('liv');
+  renderOD('liv');
+  actualizarSeccionesPro();
+}
+
+function procesarPesado(){
+  const raw = document.getElementById('inputPesado').value;
+  if(!raw.trim()){ msg('Pesado','Pega datos antes de procesar.', 'err'); return; }
+  DATA_PESADO = parsePesado(raw);
+  if(DATA_PESADO.length===0){ msg('Pesado','No se pudieron detectar registros. Revisa el formato (3 líneas por registro).', 'err'); return; }
+  const tipo = DATA_PESADO._descartados>0 ? 'warn' : 'ok';
+  msg('Pesado', `${DATA_PESADO.length} registro(s) procesado(s) correctamente` + (DATA_PESADO._descartados>0 ? ` — ${DATA_PESADO._descartados} bloque(s) descartado(s) por formato.` : '.'), tipo);
+  const res = buildResumenPesado(DATA_PESADO);
+  const resEst = buildEncuestasPorEstacion(DATA_PESADO);
+  const resVal = buildValidezPorTipo(DATA_PESADO);
+  document.getElementById('resultPesado').innerHTML =
+    panelCalidad(DATA_PESADO,'pesados') +
+    `<div class="result-title">Tabla de vehículos pesados</div>` + tablaResumenPesado(res) +
+    `<div class="result-title">Total de encuestas por día según estación</div>` + tablaEncuestasPorEstacion(resEst) +
+    `<div class="result-title">Muestras válidas e inválidas por tipología vehicular</div>` + tablaValidezPorTipo(resVal) +
+    `<div class="result-title">Tipo de vehículo por estación</div>` + selectorTipoEstacion(DATA_PESADO,'pes') +
+    `<div class="result-title">Carrocería por estación (PE-3SG / PE-3SW)</div>` + selectorCampoEstacion(DATA_PESADO,'pes','carroceria') +
+    `<div class="result-title">Combustible por estación (PE-3SG / PE-3SW)</div>` + selectorCampoEstacion(DATA_PESADO,'pes','combustible') +
+    `<div class="result-title">Marca por estación (PE-3SG / PE-3SW)</div>` + selectorCampoEstacion(DATA_PESADO,'pes','marca') +
+    `<div class="result-title">Año por estación (PE-3SG / PE-3SW)</div>` + selectorCampoEstacion(DATA_PESADO,'pes','anio') +
+    `<div class="result-title">Producto transportado por tipo de vehículo</div>` + selectorProductoTipo(DATA_PESADO,'pes') +
+    `<div class="result-title">Matriz Origen-Destino</div>` + selectorTipos(DATA_PESADO,'pes');
+  renderTipoEstacion('pes');
+  renderCampoEstacion('pes','carroceria');
+  renderCampoEstacion('pes','combustible');
+  renderCampoEstacion('pes','marca');
+  renderCampoEstacion('pes','anio');
+  renderProductoTipo('pes');
+  renderOD('pes');
+  actualizarSeccionesPro();
+}
+
+function actualizarSeccionesPro(){
+  renderConsolidado();
+}
+
+function msg(which, text, kind){
+  document.getElementById('msg'+which).innerHTML = `<div class="msg ${kind}">${text}</div>`;
+}
+function limpiar(tipo){
+  if(tipo==='liviano'){ document.getElementById('inputLiviano').value=''; document.getElementById('resultLiviano').innerHTML=''; document.getElementById('msgLiviano').innerHTML=''; DATA_LIVIANO=[]; }
+  else{ document.getElementById('inputPesado').value=''; document.getElementById('resultPesado').innerHTML=''; document.getElementById('msgPesado').innerHTML=''; DATA_PESADO=[]; }
+  actualizarSeccionesPro();
+}
+
+function cargarEjemplo(tipo){
+  if(tipo==='liviano'){
+    document.getElementById('inputLiviano').value =
+`\t\t\t\t\t\t\tLugar\tSANTO TOMAS\tLugar\tYAURI\tT:\tP:\tE:\tS:\t\t\t
+4:36\tX4V-482\tAUTO\tKIA\tPICANTO\t2020\tGASOL\t5\t3\tProv.\tCHUMBIVILCAS\tProv.\tESPINAR\tX\t0\t0\t0\tX\t\t11\tENTRADA
+\t\t\t\t\t\t\tDpto\tCUSCO\tDpto\tCUSCO
+\t\t\t\t\t\t\tLugar\tCHALLHUAHUACHO\tLugar\tYAURI\tT:\tP:\tE:\tS:\t\t\t
+5:07\tCBX-005\tAUTO\tHYUNDAI\tACCENT LS/97\t1996\tGASOL\t5\t4\tProv.\tCOTABAMBAS\tProv.\tESPINAR\t0\tX\t0\t0\tX\t12\tENTRADA
+\t\t\t\t\t\t\tDpto\tAPURÍMAC\tDpto\tCUSCO
+\t\t\t\t\t\t\tLugar\tYAURI\tLugar\tSANTO TOMAS\tT:\tP:\tE:\tS:\t\t\t
+14:22\tABC-123\tCAMIONETA\tTOYOTA\tHILUX\t2018\tDIESEL\t5\t2\tProv.\tESPINAR\tProv.\tCHUMBIVILCAS\t0\tX\t0\t0\tX\t13\tSALIDA
+\t\t\t\t\t\t\tDpto\tCUSCO\tDpto\tCUSCO`;
+  } else {
+    document.getElementById('inputPesado').value =
+`\t\t\t\t\t\tLugar\tSANTO TOMAS\tLugar\tYAURI
+5:15\tV3L-888\tC2\tBARANDA\tOTROS\tDIESEL\tABARROTES\tProv.\tCHUMBIVILCAS\tProv.\tESPINAR\t4\t3\t1\tMITSUBISHI\tCANTER\t10\t2\t2\t\t✔\t✔\t\t\t\t\t\t\t\t\t\t\t11\tENTRADA
+\t\t\t\t\t\tDpto\tCUSCO\tDpto\tCUSCO
+\t\t\t\t\t\tLugar\tLIVITACA\tLugar\tYAURI
+5:32\tC7Q-835\tC4\tTOLVA\tOTROS\tDIESEL\tABARROTES\tProv.\tCHUMBIVILCAS\tProv.\tESPINAR\t37.8\t2\t1\tVOLVO\tFMX 6X4 T\t11\t9.8\t28\t\t✔\t\t\t\t\t\t✔\t\t\t\t\t\t12\tSALIDA
+\t\t\t\t\t\tDpto\tCUSCO\tDpto\tCUSCO
+\t\t\t\t\t\tLugar\tYAURI\tLugar\tSANTO TOMAS
+16:40\tX9K-221\tC3\tFURGON\tOTROS\tDIESEL\tCARGA GENERAL\tProv.\tESPINAR\tProv.\tCHUMBIVILCAS\t18.2\t3\t1\tSCANIA\tP360\t9\t8\t18\t\t✔\t\t✔\t\t\t\t\t\t\t\t\t\t13\tSALIDA
+\t\t\t\t\t\tDpto\tCUSCO\tDpto\tCUSCO`;
+  }
+}
+
+// =====================================================================
+// ---------- pestañas ----------
+// =====================================================================
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
 
